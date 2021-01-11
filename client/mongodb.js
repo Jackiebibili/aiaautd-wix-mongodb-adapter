@@ -1,6 +1,6 @@
 const MongoClient = require('mongodb').MongoClient;
 const uri = "mongodb+srv://admin:TQs5xcoaogp3wxDJ@cluster0.2hycd.mongodb.net/db0?retryWrites=true&w=majority";
-const client = new MongoClient(uri, { useNewUrlParser: true });
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 let mongo;
 const NotFoundError = require('../model/error/not-found');
 const AlreadyExistsError = require('../model/error/already-exists');

@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const bodyParser = require('body-parser');
 const items = require('./controller/items');
 const schemas = require('./controller/schemas');
@@ -9,6 +10,15 @@ const authMiddleware = require('./utils/auth')
 
 const app = express();
 const port = process.env.PORT || 8080;
+
+//ignore direct access to the interface through url
+//////////////////////////////
+app.use('/static', express.static(path.join(__dirname, 'public')));
+app.use(express.static('public/'))
+app.get('/*', (req, res) => {
+   res.sendFile(path.join(__dirname, 'public/index.html'));
+})
+/////////////////////////////
 
 app.use(bodyParser.json());
 app.use(authMiddleware);
