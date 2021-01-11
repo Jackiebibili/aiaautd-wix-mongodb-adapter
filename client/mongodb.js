@@ -1,24 +1,20 @@
 const MongoClient = require('mongodb').MongoClient;
 const uri = "mongodb+srv://admin:TQs5xcoaogp3wxDJ@cluster0.2hycd.mongodb.net/db0?retryWrites=true&w=majority";
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+//const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 let mongo;
 const NotFoundError = require('../model/error/not-found');
 const AlreadyExistsError = require('../model/error/already-exists');
-
+const mongoUtil = require('./mongoUtil');
 const { parseFilter } = require('./support/filter-parser')
 const { parseSort } = require('./support/sort-parser')
-client.connect(err => {
-   mongo = client.db("db0");
-   console.log("MongoDB connected");
-   //client.close();
-});
 
 
-exports.query = (query) => {
+exports.query = async (query) => {
+   mongo = await mongoUtil.getDb();
    const collRef = mongo.collection(query.collectionName);
    let fsQuery = parseSort(query.sort, collRef);
    //fsQuery = parseFilter(query.filter, fsQuery);
-   if (query.filter.fieldName && query.filter.value) {
+   if (query.filter && query.filter.fieldName && query.filter.value) {
       return fsQuery.find({ [query.filter.fieldName]: query.filter.value },
          {
             limit: query.limit,
@@ -33,11 +29,13 @@ exports.query = (query) => {
    }
 }
 
-exports.get = (collectionName, itemId) => {
+exports.get = async (collectionName, itemId) => {
+   mongo = await mongoUtil.getDb();
    return mongo.collection(collectionName).findOne({ "_id": itemId });
 }
 
-exports.listCollectionIds = () => {
+exports.listCollectionIds = async () => {
+   mongo = await mongoUtil.getDb();
    return mongo.listCollections().toArray()
       .then(coll => coll.map(data => {
          return { id: data.name }
@@ -46,8 +44,8 @@ exports.listCollectionIds = () => {
 
 exports.delete = async (collectionName, itemId) => {
    try {
+      mongo = await mongoUtil.getDb();
       await mongo.collection(collectionName).deleteOne({ "_id": itemId })
-
    } catch (err) {
       //delete not found
       throw err;
@@ -56,6 +54,7 @@ exports.delete = async (collectionName, itemId) => {
 
 exports.update = async (collectionName, item, upsert = true) => {
    try {
+      mongo = await mongoUtil.getDb();
       await mongo.collection(collectionName).replaceOne({ "_id": item._id }, item, { upsert: upsert });
    } catch (err) {
       //update not found
@@ -65,6 +64,7 @@ exports.update = async (collectionName, item, upsert = true) => {
 
 exports.insert = async (collectionName, item) => {
    try {
+      mongo = await mongoUtil.getDb();
       await mongo.collection(collectionName).insertOne(item);
    } catch (e) {
       //already exists
@@ -73,6 +73,7 @@ exports.insert = async (collectionName, item) => {
 }
 
 const getFirstDoc = async (collectionName) => {
+   mongo = await mongoUtil.getDb();
    const collection = mongo.collection(collectionName);
    const doc = await collection.find({}).toArray();
 

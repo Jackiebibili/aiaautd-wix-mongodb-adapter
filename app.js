@@ -7,7 +7,6 @@ const provision = require('./controller/provision');
 const { wrapError, errorMiddleware } = require('./utils/error')
 const authMiddleware = require('./utils/auth')
 
-
 const app = express();
 const port = process.env.PORT || 8080;
 

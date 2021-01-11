@@ -10,7 +10,7 @@ exports.find = async payload => {
       throw new BadRequestError('Missing skip in request body')
    if (!query.limit) throw new BadRequestError('Missing limit in request body')
 
-   const results = await client.query(query).toArray();
+   const results = await (await (client.query(query))).toArray();
    const enhanced = results.map(doc => {
       return wrapDates({
          _id: doc.id,
@@ -79,7 +79,7 @@ exports.count = async payload => {
    const { collectionName } = payload;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
 
-   const results = await client.query({ collectionName: collectionName, limit: 1000, skip: 0, select: 'id' }).toArray();
+   const results = await (await client.query({ collectionName: collectionName, limit: 1000, skip: 0, select: 'id' })).toArray();
 
    return {
       totalCount: results.length
