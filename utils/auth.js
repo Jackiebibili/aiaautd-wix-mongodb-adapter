@@ -1,6 +1,7 @@
 const BadRequestError = require('../model/error/bad-request')
 const UnauthorizedError = require('../model/error/unauthorized')
 const Storage = require('../service/storage')
+const mongoUtil = require('../client/mongoUtil');
 const uuid = require('uuid').v4;
 
 let _configuredSecretKey = process.env.SECRET_KEY || 'wix-big-secret';
@@ -59,8 +60,11 @@ const setDatabaseName = async (req) => {
    let site_db_name;
    const itemList = await Storage.find(query);
    if (itemList.totalCount == 0 || !(site_db_name = itemList.items[0].site_db_name)) {
-      //save as a new site
       site_db_name = site_name;
+      //create an empty collection
+      await Storage.insert({ site_db_name: site_db_name, collectionName: "collection0", item: { _id: uuid() } });
+
+      //save as a new site
       const body = {
          site_db_name: "websites",
          collectionName: "site",
