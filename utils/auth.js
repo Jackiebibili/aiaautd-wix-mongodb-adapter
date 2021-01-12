@@ -4,7 +4,8 @@ const Storage = require('../service/storage')
 const mongoUtil = require('../client/mongoUtil');
 const uuid = require('uuid').v4;
 
-let _configuredSecretKey = process.env.SECRET_KEY || 'wix-big-secret';
+//the secretKey is: KO0vTOO0uDdhAWGV
+let _configuredSecretKey = process.env.SECRET_KEY || 'KO0vTOO0uDdhAWGV';
 
 const extractPropertyFromSettings = (requestContext, propertyName) => {
    if (!requestContext) {
@@ -18,12 +19,14 @@ const extractPropertyFromSettings = (requestContext, propertyName) => {
    return requestContext.settings[propertyName];
 };
 
-const extractInstanceId = (requestContext) => {
-   if (!requestContext || !requestContext.instanceId) {
+
+const extractRequestContextProperty = (requestContext, propertyName) => {
+   console.log(requestContext);
+   if (!requestContext || !requestContext[propertyName]) {
       throw new UnauthorizedError(`Missing ${propertyName} in request context`)
    }
 
-   return requestContext.instanceId;
+   return requestContext[propertyName];
 };
 
 
@@ -44,14 +47,13 @@ const authMiddleware = async (req, _, next) => {
 };
 
 const setDatabaseName = async (req) => {
-   const instanceId = extractInstanceId(req.body.requestContext)
    let site_name = extractPropertyFromSettings(req.body.requestContext, "site_db_name")
    const query = {
       collectionName: "site",
       site_db_name: "websites",
       filter: {
-         fieldName: "instanceId",
-         value: instanceId
+         fieldName: "site_db_name",
+         value: site_name
       },
       sort: null,
       skip: 0,
@@ -70,12 +72,17 @@ const setDatabaseName = async (req) => {
          collectionName: "site",
          item: {
             _id: uuid(),
-            instanceId: instanceId,
             site_db_name: site_db_name,
             initial_accessed: new Date()
          }
       }
       Storage.insert(body);   //async insert
+   } else if (!itemList.items[0].instanceId) {
+      //put the instanceId after provision
+      const instanceId = extractRequestContextProperty(req.body.requestContext, "instanceId");
+      const updateItem = itemList.items[0];
+      updateItem.instanceId = instanceId;
+      await Storage.update({ site_db_name: "websites", collectionName: "site", item: updateItem });
    }
    return site_db_name;
 }

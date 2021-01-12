@@ -64,8 +64,9 @@ exports.insert = async payload => {
 }
 
 exports.update = async payload => {
-   const { collectionName, item } = payload;
-   const site_db_name = payload.requestContext.site_db_name;
+   let { site_db_name, collectionName, item } = payload;
+   site_db_name = payload.requestContext ? payload.requestContext.site_db_name : null ||
+      site_db_name;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
    if (!item) throw new BadRequestError('Missing item in request body');
    if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
