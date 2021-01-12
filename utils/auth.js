@@ -76,7 +76,7 @@ const setDatabaseName = async (req) => {
             initial_accessed: new Date()
          }
       }
-      Storage.insert(body);   //async insert
+      await Storage.insert(body);
    } else if (!itemList.items[0].instanceId) {
       //put the instanceId after provision
       const instanceId = extractRequestContextProperty(req.body.requestContext, "instanceId");
