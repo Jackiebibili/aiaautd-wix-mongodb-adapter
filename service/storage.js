@@ -1,14 +1,18 @@
 const uuid = require('uuid').v4;
 const client = require('../client/mongodb');
-
+const BadRequestError = require('../model/error/bad-request');
 
 exports.find = async payload => {
    const query = { collectionName, filter, sort, skip, limit } = payload;
+   query.site_db_name = payload.requestContext ? payload.requestContext.site_db_name : null || query.site_db_name;
    if (!query.collectionName)
       throw new BadRequestError('Missing collectionName in request body')
    if (!query.skip && query.skip !== 0)
       throw new BadRequestError('Missing skip in request body')
    if (!query.limit) throw new BadRequestError('Missing limit in request body')
+   if (!query.site_db_name) {
+      throw new BadRequestError('Missing siteName in request body');
+   }
 
    const results = await (await (client.query(query))).toArray();
    const enhanced = results.map(doc => {
@@ -26,10 +30,12 @@ exports.find = async payload => {
 
 exports.get = async payload => {
    const { collectionName, itemId } = payload;
+   const site_db_name = payload.requestContext.site_db_name;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
    if (!itemId) throw new BadRequestError('Missing itemId in request body');
+   if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
 
-   const document = await client.get(collectionName, itemId);
+   const document = await client.get(site_db_name, collectionName, itemId);
 
    if (!document.exists) {
       throw new Error(`item ${itemId} not found`);
@@ -44,42 +50,51 @@ exports.get = async payload => {
 }
 
 exports.insert = async payload => {
-   const { collectionName, item } = payload;
+   let { site_db_name, collectionName, item } = payload;
+   site_db_name = payload.requestContext ? payload.requestContext.site_db_name : null ||
+      site_db_name;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
    if (!item) throw new BadRequestError('Missing item in request body');
+   if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
 
    if (!item._id) item._id = uuid();
-   await client.insert(collectionName, extractDates(item));
+   await client.insert(site_db_name, collectionName, extractDates(item));
 
    return { item: wrapDates(item) };
 }
 
 exports.update = async payload => {
    const { collectionName, item } = payload;
+   const site_db_name = payload.requestContext.site_db_name;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
    if (!item) throw new BadRequestError('Missing item in request body');
+   if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
 
-   await client.update(collectionName, extractDates(item));
+   await client.update(site_db_name, collectionName, extractDates(item));
 
    return { item: wrapDates(item) };
 }
 
 exports.remove = async payload => {
    const { collectionName, itemId } = payload;
+   const site_db_name = payload.requestContext.site_db_name;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
    if (!itemId) throw new BadRequestError('Missing itemId in request body');
+   if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
 
-   const item = await client.get(collectionName, itemId);
-   await client.delete(collectionName, itemId);
+   const item = await client.get(site_db_name, collectionName, itemId);
+   await client.delete(site_db_name, collectionName, itemId);
 
    return { item: wrapDates(item) };
 }
 
 exports.count = async payload => {
    const { collectionName } = payload;
+   const site_db_name = payload.requestContext.site_db_name;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
+   if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
 
-   const results = await (await client.query({ collectionName: collectionName, limit: 1000, skip: 0, select: 'id' })).toArray();
+   const results = await (await client.query({ collectionName: collectionName, site_db_name: site_db_name, limit: 1000, skip: 0, select: 'id' })).toArray();
 
    return {
       totalCount: results.length

@@ -10,7 +10,7 @@ const { parseSort } = require('./support/sort-parser')
 
 
 exports.query = async (query) => {
-   mongo = await mongoUtil.getDb();
+   mongo = await mongoUtil.getDb(query.site_db_name);
    const collRef = mongo.collection(query.collectionName);
    let fsQuery = parseSort(query.sort, collRef);
    //fsQuery = parseFilter(query.filter, fsQuery);
@@ -29,22 +29,22 @@ exports.query = async (query) => {
    }
 }
 
-exports.get = async (collectionName, itemId) => {
-   mongo = await mongoUtil.getDb();
+exports.get = async (site_db_name, collectionName, itemId) => {
+   mongo = await mongoUtil.getDb(site_db_name);
    return mongo.collection(collectionName).findOne({ "_id": itemId });
 }
 
-exports.listCollectionIds = async () => {
-   mongo = await mongoUtil.getDb();
+exports.listCollectionIds = async (site_db_name) => {
+   mongo = await mongoUtil.getDb(site_db_name);
    return mongo.listCollections().toArray()
       .then(coll => coll.map(data => {
          return { id: data.name }
       }))
 }
 
-exports.delete = async (collectionName, itemId) => {
+exports.delete = async (site_db_name, collectionName, itemId) => {
    try {
-      mongo = await mongoUtil.getDb();
+      mongo = await mongoUtil.getDb(site_db_name);
       await mongo.collection(collectionName).deleteOne({ "_id": itemId })
    } catch (err) {
       //delete not found
@@ -52,9 +52,9 @@ exports.delete = async (collectionName, itemId) => {
    }
 }
 
-exports.update = async (collectionName, item, upsert = true) => {
+exports.update = async (site_db_name, collectionName, item, upsert = true) => {
    try {
-      mongo = await mongoUtil.getDb();
+      mongo = await mongoUtil.getDb(site_db_name);
       await mongo.collection(collectionName).replaceOne({ "_id": item._id }, item, { upsert: upsert });
    } catch (err) {
       //update not found
@@ -62,9 +62,9 @@ exports.update = async (collectionName, item, upsert = true) => {
    }
 }
 
-exports.insert = async (collectionName, item) => {
+exports.insert = async (site_db_name, collectionName, item) => {
    try {
-      mongo = await mongoUtil.getDb();
+      mongo = await mongoUtil.getDb(site_db_name);
       await mongo.collection(collectionName).insertOne(item);
    } catch (e) {
       //already exists
@@ -72,17 +72,17 @@ exports.insert = async (collectionName, item) => {
    }
 }
 
-const getFirstDoc = async (collectionName) => {
-   mongo = await mongoUtil.getDb();
+const getFirstDoc = async (site_db_name, collectionName) => {
+   mongo = await mongoUtil.getDb(site_db_name);
    const collection = mongo.collection(collectionName);
    const doc = await collection.find({}).toArray();
 
-   return doc[0];
+   return typeof doc[0] === "undefined" ? {} : doc[0];   //guard for empty collection table
 }
 
-exports.describeDoc = async (collectionId) => {
+exports.describeDoc = async (site_db_name, collectionId) => {
 
-   const aDoc = await getFirstDoc(collectionId)
+   const aDoc = await getFirstDoc(site_db_name, collectionId)
 
    return {
       displayName: collectionId,
