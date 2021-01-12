@@ -1,7 +1,6 @@
 const BadRequestError = require('../model/error/bad-request')
 const UnauthorizedError = require('../model/error/unauthorized')
 const Storage = require('../service/storage')
-const mongoUtil = require('../client/mongoUtil');
 const uuid = require('uuid').v4;
 
 //the secretKey is: KO0vTOO0uDdhAWGV
@@ -63,8 +62,13 @@ const setDatabaseName = async (req) => {
    const itemList = await Storage.find(query);
    if (itemList.totalCount == 0 || !(site_db_name = itemList.items[0].site_db_name)) {
       site_db_name = site_name;
-      //create an empty collection
-      await Storage.insert({ site_db_name: site_db_name, collectionName: "collection0", item: { _id: uuid() } });
+
+      //create an empty collection with an element for display i wix
+      await Storage.insert({
+         site_db_name: site_db_name,
+         collectionName: "collection0",
+         item: { _id: uuid() }
+      });
 
       //save as a new site
       const body = {
@@ -77,13 +81,20 @@ const setDatabaseName = async (req) => {
          }
       }
       await Storage.insert(body);
+
    } else if (!itemList.items[0].instanceId) {
+
       //put the instanceId after provision
       const instanceId = extractRequestContextProperty(req.body.requestContext, "instanceId");
       const updateItem = itemList.items[0];
       updateItem.instanceId = instanceId;
-      await Storage.update({ site_db_name: "websites", collectionName: "site", item: updateItem });
+      await Storage.update({
+         site_db_name: "websites",
+         collectionName: "site",
+         item: updateItem
+      });
    }
+
    return site_db_name;
 }
 

@@ -1,6 +1,3 @@
-const MongoClient = require('mongodb').MongoClient;
-const uri = "mongodb+srv://admin:TQs5xcoaogp3wxDJ@cluster0.2hycd.mongodb.net/db0?retryWrites=true&w=majority";
-//const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 let mongo;
 const NotFoundError = require('../model/error/not-found');
 const AlreadyExistsError = require('../model/error/already-exists');
@@ -48,7 +45,7 @@ exports.delete = async (site_db_name, collectionName, itemId) => {
       await mongo.collection(collectionName).deleteOne({ "_id": itemId })
    } catch (err) {
       //delete not found
-      throw err;
+      throw new NotFoundError("The deleted item is not found");
    }
 }
 
@@ -58,7 +55,7 @@ exports.update = async (site_db_name, collectionName, item, upsert = true) => {
       await mongo.collection(collectionName).replaceOne({ "_id": item._id }, item, { upsert: upsert });
    } catch (err) {
       //update not found
-      throw err;
+      throw new NotFoundError("The updated item is not found");
    }
 }
 
@@ -68,7 +65,7 @@ exports.insert = async (site_db_name, collectionName, item) => {
       await mongo.collection(collectionName).insertOne(item);
    } catch (e) {
       //already exists
-      throw err;
+      throw new AlreadyExistsError("The inserted item is already in the database");
    }
 }
 
