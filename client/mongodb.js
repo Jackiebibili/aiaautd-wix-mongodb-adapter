@@ -127,8 +127,11 @@ const jsonValueTypeToCorvid = val => {
       case 'string':
          return 'text'
       case 'object':
-         if (val instanceof Firestore.Timestamp) {
+         if (val instanceof Date) {
             return 'datetime'
+         }
+         if (val instanceof Array) {
+            return 'array'
          }
       default:
          return type
