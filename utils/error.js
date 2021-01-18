@@ -8,8 +8,8 @@ const UnauthorizedError = require('../model/error/unauthorized')
  * to express 'next' for correct handling.
  * @param {*} fn the function to apply middleware to.
  */
-exports.wrapError = fn => (req, res, next) => {
-   Promise.resolve(fn(req, res, next)).catch(next)
+exports.wrapError = (fn, dbClient) => (req, res, next) => {
+   Promise.resolve(fn(req, res, next, dbClient)).catch(next)
 }
 
 exports.errorMiddleware = (err, req, res, next) => {

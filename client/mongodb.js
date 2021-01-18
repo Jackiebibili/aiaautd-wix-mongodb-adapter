@@ -6,8 +6,8 @@ const { parseFilter } = require('./support/filter-parser')
 const { parseSort } = require('./support/sort-parser')
 
 
-exports.query = async (query) => {
-   mongo = await mongoUtil.getDb(query.site_db_name);
+exports.query = async (query, dbClient) => {
+   mongo = await mongoUtil.getDb(query.site_db_name, dbClient);
    const collRef = mongo.collection(query.collectionName);
    let fsQuery = parseSort(query.sort, collRef);
    //fsQuery = parseFilter(query.filter, fsQuery);
@@ -26,22 +26,22 @@ exports.query = async (query) => {
    }
 }
 
-exports.get = async (site_db_name, collectionName, itemId) => {
-   mongo = await mongoUtil.getDb(site_db_name);
+exports.get = async (site_db_name, collectionName, itemId, dbClient) => {
+   mongo = await mongoUtil.getDb(site_db_name, dbClient);
    return mongo.collection(collectionName).findOne({ "_id": itemId });
 }
 
-exports.listCollectionIds = async (site_db_name) => {
-   mongo = await mongoUtil.getDb(site_db_name);
+exports.listCollectionIds = async (site_db_name, dbClient) => {
+   mongo = await mongoUtil.getDb(site_db_name, dbClient);
    return mongo.listCollections().toArray()
       .then(coll => coll.map(data => {
          return { id: data.name }
       }))
 }
 
-exports.delete = async (site_db_name, collectionName, itemId) => {
+exports.delete = async (site_db_name, collectionName, itemId, dbClient) => {
    try {
-      mongo = await mongoUtil.getDb(site_db_name);
+      mongo = await mongoUtil.getDb(site_db_name, dbClient);
       await mongo.collection(collectionName).deleteOne({ "_id": itemId })
    } catch (err) {
       //delete not found
@@ -49,9 +49,9 @@ exports.delete = async (site_db_name, collectionName, itemId) => {
    }
 }
 
-exports.update = async (site_db_name, collectionName, item, upsert = true) => {
+exports.update = async (site_db_name, collectionName, item, dbClient, upsert = true) => {
    try {
-      mongo = await mongoUtil.getDb(site_db_name);
+      mongo = await mongoUtil.getDb(site_db_name, dbClient);
       await mongo.collection(collectionName).replaceOne({ "_id": item._id }, item, { upsert: upsert });
    } catch (err) {
       //update not found
@@ -59,9 +59,9 @@ exports.update = async (site_db_name, collectionName, item, upsert = true) => {
    }
 }
 
-exports.insert = async (site_db_name, collectionName, item) => {
+exports.insert = async (site_db_name, collectionName, item, dbClient) => {
    try {
-      mongo = await mongoUtil.getDb(site_db_name);
+      mongo = await mongoUtil.getDb(site_db_name, dbClient);
       await mongo.collection(collectionName).insertOne(item);
    } catch (e) {
       //already exists
@@ -69,17 +69,17 @@ exports.insert = async (site_db_name, collectionName, item) => {
    }
 }
 
-const getFirstDoc = async (site_db_name, collectionName) => {
-   mongo = await mongoUtil.getDb(site_db_name);
+const getFirstDoc = async (site_db_name, collectionName, dbClient) => {
+   mongo = await mongoUtil.getDb(site_db_name, dbClient);
    const collection = mongo.collection(collectionName);
    const doc = await collection.find({}).toArray();
 
    return typeof doc[0] === "undefined" ? {} : doc[0];   //guard for empty collection table
 }
 
-exports.describeDoc = async (site_db_name, collectionId) => {
+exports.describeDoc = async (site_db_name, collectionId, dbClient) => {
 
-   const aDoc = await getFirstDoc(site_db_name, collectionId)
+   const aDoc = await getFirstDoc(site_db_name, collectionId, dbClient)
 
    return {
       displayName: collectionId,

@@ -30,22 +30,25 @@ const extractRequestContextProperty = (requestContext, propertyName) => {
 
 
 
-const authMiddleware = async (req, _, next) => {
-   const secretKey = extractPropertyFromSettings(req.body.requestContext, "secretKey")
+const authMiddleware = (dbClient) => {
+   return async (req, _, next) => {
+      const secretKey = extractPropertyFromSettings(req.body.requestContext, "secretKey")
 
-   if (_configuredSecretKey !== secretKey) {
-      throw new UnauthorizedError('Provided secret key does not match')
-   }
+      if (_configuredSecretKey !== secretKey) {
+         throw new UnauthorizedError('Provided secret key does not match')
+      }
 
-   //validation of secretKey passes
+      //validation of secretKey passes
 
-   //validate the site's instanceId
-   req.body.requestContext.site_db_name = await setDatabaseName(req);
+      //validate the site's instanceId
+      req.body.requestContext.site_db_name = await setDatabaseName(req, dbClient);
 
-   next()
-};
+      next()
+   };
+}
 
-const setDatabaseName = async (req) => {
+
+const setDatabaseName = async (req, dbClient) => {
    let site_name = extractPropertyFromSettings(req.body.requestContext, "site_db_name")
    const query = {
       collectionName: "site",
@@ -59,7 +62,7 @@ const setDatabaseName = async (req) => {
       limit: 1
    }
    let site_db_name;
-   const itemList = await Storage.find(query);
+   const itemList = await Storage.find(query, dbClient);
    if (itemList.totalCount == 0 || !(site_db_name = itemList.items[0].site_db_name)) {
       site_db_name = site_name;
 
@@ -92,7 +95,7 @@ const setDatabaseName = async (req) => {
          site_db_name: "websites",
          collectionName: "site",
          item: updateItem
-      });
+      }, dbClient);
    }
 
    return site_db_name;

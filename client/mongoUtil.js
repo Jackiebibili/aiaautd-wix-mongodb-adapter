@@ -1,13 +1,29 @@
 const MongoClient = require('mongodb').MongoClient;
-const uri = "mongodb+srv://admin:TQs5xcoaogp3wxDJ@cluster0.2hycd.mongodb.net/websites?retryWrites=true&w=majority";
+const mongoConfig = require('./mongodbConfig');
+const uri = mongoConfig.URI;
+const uri_concat_prefix = mongoConfig.URI_prefix;
+const uri_concat_suffix = mongoConfig.URI_suffix;
 var _db;
+var _client;
+
 module.exports = {
-   getDb: async (site_name) => {
+   getDb: (db_name, dbClient) => {
       try {
-         _db = await (await MongoClient.connect(uri, { useUnifiedTopology: true })).db(site_name);
+         _db = dbClient.db(db_name);
          return _db;
       } catch (e) {
          return e;
       }
+   },
+   getClient: () => {
+      try {
+         _client = new MongoClient(uri, { useUnifiedTopology: true }).connect();
+         return _client;
+      } catch (e) {
+         return e;
+      }
+   },
+   concatURI: db_name => {
+      return uri_concat_prefix + db_name + uri_concat_suffix;
    }
 }
