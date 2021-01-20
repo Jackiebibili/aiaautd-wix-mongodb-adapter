@@ -12,7 +12,13 @@ exports.list = async (payload, dbClient) => {
    const site_db_name = payload.requestContext.site_db_name;
    const schemasIds = await client.listCollectionIds(site_db_name, dbClient);
 
-   const schemas = schemasIds.map(schema => {
+   const schemas = schemasIds.filter(schema => {
+      //skip file chunks' collections
+      if (schema.id === "fileUploads.chunks" || schema.id === "fileUploads.files") {
+         return false;
+      }
+      return true;
+   }).map(schema => {
       return client.describeDoc(site_db_name, schema.id, dbClient);
    });
    return { schemas: await Promise.all(schemas) };

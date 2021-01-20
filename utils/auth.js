@@ -3,7 +3,7 @@ const UnauthorizedError = require('../model/error/unauthorized')
 const Storage = require('../service/storage')
 const uuid = require('uuid').v4;
 
-//the secretKey is: KO0vTOO0uDdhAWGV
+//the secretKey is: KO0vTOO0uDdhAWGV and you know the secret
 let _configuredSecretKey = process.env.SECRET_KEY || 'KO0vTOO0uDdhAWGV';
 
 const extractPropertyFromSettings = (requestContext, propertyName) => {
@@ -32,6 +32,7 @@ const extractRequestContextProperty = (requestContext, propertyName) => {
 
 const authMiddleware = (dbClient) => {
    return async (req, _, next) => {
+      console.log(req.body);
       const secretKey = extractPropertyFromSettings(req.body.requestContext, "secretKey")
 
       if (_configuredSecretKey !== secretKey) {

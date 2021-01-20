@@ -37,7 +37,7 @@ exports.get = async (payload, dbClient) => {
 
    const document = await client.get(site_db_name, collectionName, itemId, dbClient);
 
-   if (!document.exists) {
+   if (!document) {
       throw new Error(`item ${itemId} not found`);
    }
 
