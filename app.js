@@ -1,11 +1,13 @@
 const express = require('express');
+const cors = require('cors');
 //enviroment variable register
 require('dotenv').config();
 const path = require('path');
-const bodyParser = require('body-parser');
+//const bodyParser = require('body-parser');
 const items = require('./controller/items');
 const schemas = require('./controller/schemas');
 const provision = require('./controller/provision');
+const blogs = require('./controller/blogs');
 const mongoUtil = require('./client/mongoUtil');
 const { wrapError, errorMiddleware } = require('./utils/error')
 const authMiddleware = require('./utils/auth')
@@ -14,15 +16,20 @@ const imageByIdRouter = require('./client/image-by-id-route');
 const app = express();
 const port = process.env.PORT || 8080;
 
+
+
 /* Connect to the database */
 let client;
+
 (async function () {
    try {
       client = await mongoUtil.getClient();
       console.log('===MongoDB connected===');
-
+      
+      app.use(cors());
       //parse request's json body
-      app.use(bodyParser.json());
+      app.use(express.json());
+      app.use(express.urlencoded({extended: true}))
 
       //get images without authentication
       app.use('/file', imageByIdRouter(client));
@@ -37,9 +44,12 @@ let client;
 
       //secretKey authentication
       app.use(authMiddleware(client));
-
+      
       //use multer middleware
       app.use('/file', fileRouter(client));
+
+      //new routes for BLOGS, specifically
+      app.post('/data/blogs', wrapError(blogs.getBlogEntry, client));
 
       //routes
       app.post('/schemas/find', wrapError(schemas.findSchemas, client))

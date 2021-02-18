@@ -30,7 +30,7 @@ exports.find = async (payload, dbClient) => {
 
 exports.get = async (payload, dbClient) => {
    const { collectionName, itemId } = payload;
-   const site_db_name = payload.requestContext.site_db_name;
+   const site_db_name = payload.requestContext? payload.requestContext.site_db_name : payload.site_db_name;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
    if (!itemId) throw new BadRequestError('Missing itemId in request body');
    if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
