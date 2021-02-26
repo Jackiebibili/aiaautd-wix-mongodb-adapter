@@ -52,15 +52,15 @@ const authMiddleware = (dbClient) => {
 const setDatabaseName = async (req, dbClient) => {
    let site_name = extractPropertyFromSettings(req.body.requestContext, "site_db_name")
    const query = {
-      collectionName: "site",
-      site_db_name: "websites",
-      filter: {
-         fieldName: "site_db_name",
-         value: site_name
+      body:{
+         collectionName: "site",
+         site_db_name: "websites",
       },
-      sort: null,
-      skip: 0,
-      limit: 1
+      query: {
+         site_db_name: site_name,
+         skip: 0,
+         limit: 1,
+      }
    }
    let site_db_name;
    const itemList = await Storage.find(query, dbClient);

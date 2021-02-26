@@ -1,38 +1,57 @@
-let mongo;
 const NotFoundError = require('../model/error/not-found');
 const AlreadyExistsError = require('../model/error/already-exists');
 const mongoUtil = require('./mongoUtil');
-const { parseFilter } = require('./support/filter-parser')
-const { parseSort } = require('./support/sort-parser')
+const { sortMap, filterMap, defaultSort } = require('../client/query_support/options')
 
+exports.query = async (site_db_name, collectionName, query, dbClient) => {
+   //get mongodb collection ref
+   const mongo = await mongoUtil.getDb(site_db_name, dbClient);
+   const collRef = mongo.collection(collectionName);
 
-exports.query = async (query, dbClient) => {
-   mongo = await mongoUtil.getDb(query.site_db_name, dbClient);
-   const collRef = mongo.collection(query.collectionName);
-   let fsQuery = parseSort(query.sort, collRef);
-   //fsQuery = parseFilter(query.filter, fsQuery);
-   if (query.filter && query.filter.fieldName && query.filter.value) {
-      return fsQuery.find({ [query.filter.fieldName]: query.filter.value },
-         {
-            limit: query.limit,
-            skip: query.skip
-         });
-   } else {
-      return fsQuery.find({},
-         {
-            limit: query.limit,
-            skip: query.skip
-         });
+   //formulate query and sort objects
+   const filter = query.filter.reduce((acc, obj) => {
+      const controller = filterMap.get(obj.key).parser;
+      const queryObject = controller({[obj.key]: obj.value});
+      return {
+         query: {
+            ...acc.query,
+            ...queryObject.query,
+         },
+         aggregate: {
+            ...acc.aggregate,
+            ...queryObject.aggregate,
+         },
+      };
+   }, {});
+
+   let sort = query.sort.reduce((acc, obj) => {
+      const controller = sortMap.get(obj.key).parser;
+      const sortObject = controller(obj);
+      return {
+         sort: {
+            ...acc.sort,
+            ...sortObject.sort,
+         },
+      };
+   }, {});   
+   //empty sort object --apply default sort object
+   if(!sort) {
+      sort = defaultSort();
    }
+
+   return collRef.find(filter.query, filter.aggregate)
+                     .sort(sort.sort)
+                     .skip(parseInt(query.skip))
+                     .limit(parseInt(query.limit));
 }
 
 exports.get = async (site_db_name, collectionName, itemId, dbClient) => {
-   mongo = await mongoUtil.getDb(site_db_name, dbClient);
+   const mongo = await mongoUtil.getDb(site_db_name, dbClient);
    return mongo.collection(collectionName).findOne({ "_id": itemId });
 }
 
 exports.listCollectionIds = async (site_db_name, dbClient) => {
-   mongo = await mongoUtil.getDb(site_db_name, dbClient);
+   const mongo = await mongoUtil.getDb(site_db_name, dbClient);
    return mongo.listCollections().toArray()
       .then(coll => coll.map(data => {
          return { id: data.name }
@@ -41,7 +60,7 @@ exports.listCollectionIds = async (site_db_name, dbClient) => {
 
 exports.delete = async (site_db_name, collectionName, itemId, dbClient) => {
    try {
-      mongo = await mongoUtil.getDb(site_db_name, dbClient);
+      const mongo = await mongoUtil.getDb(site_db_name, dbClient);
       await mongo.collection(collectionName).deleteOne({ "_id": itemId })
    } catch (err) {
       //delete not found
@@ -51,7 +70,7 @@ exports.delete = async (site_db_name, collectionName, itemId, dbClient) => {
 
 exports.update = async (site_db_name, collectionName, item, dbClient, upsert = true) => {
    try {
-      mongo = await mongoUtil.getDb(site_db_name, dbClient);
+      const mongo = await mongoUtil.getDb(site_db_name, dbClient);
       await mongo.collection(collectionName).replaceOne({ "_id": item._id }, item, { upsert: upsert });
    } catch (err) {
       //update not found
@@ -61,7 +80,7 @@ exports.update = async (site_db_name, collectionName, item, dbClient, upsert = t
 
 exports.insert = async (site_db_name, collectionName, item, dbClient) => {
    try {
-      mongo = await mongoUtil.getDb(site_db_name, dbClient);
+      const mongo = await mongoUtil.getDb(site_db_name, dbClient);
       await mongo.collection(collectionName).insertOne(item);
    } catch (e) {
       //already exists
@@ -70,7 +89,7 @@ exports.insert = async (site_db_name, collectionName, item, dbClient) => {
 }
 
 const getFirstDoc = async (site_db_name, collectionName, dbClient) => {
-   mongo = await mongoUtil.getDb(site_db_name, dbClient);
+   const mongo = await mongoUtil.getDb(site_db_name, dbClient);
    const collection = mongo.collection(collectionName);
    const doc = await collection.find({}).toArray();
 

@@ -1,7 +1,7 @@
 const Storage = require('../service/storage')
 
 exports.findItems = async (req, res, next, dbClient) => {
-   const findResult = await Storage.find(req.body, dbClient)
+   const findResult = await Storage.find(req, dbClient)
 
    res.status(200).json(findResult)
 }
