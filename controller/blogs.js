@@ -26,6 +26,11 @@ exports.getBlogEntry = async(req, res, next, dbClient) => {
    res.status(200).json(getBlog);
 }
 
+exports.updateBlogEntry = async (req, res, next, dbClient) => {
+   const resUpdate = await Storage.update(req.body, dbClient);
+   res.status(200).json(resUpdate.item);
+}
+
 const getListOfItems = async (ids, collectionName, site_db_name, dbClient) => {
    const items = ids.map((id) => {
       return Storage.get({itemId: id, collectionName, site_db_name }, dbClient);

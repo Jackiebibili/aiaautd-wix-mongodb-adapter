@@ -49,8 +49,8 @@ let client;
       app.use('/file', fileRouter(client));
 
       //new routes for BLOGS, specifically
-      app.post('/data/blogs', wrapError(blogs.getBlogEntry, client));
-
+      app.post('/data/blogs/find', wrapError(blogs.getBlogEntry, client));
+      app.post('/data/blogs/update', wrapError(blogs.updateBlogEntry, client));
       //routes
       app.post('/schemas/find', wrapError(schemas.findSchemas, client))
       app.post('/schemas/list', wrapError(schemas.listSchemas, client))
