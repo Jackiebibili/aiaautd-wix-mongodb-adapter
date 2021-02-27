@@ -54,7 +54,9 @@ const setDatabaseName = async (req, dbClient) => {
    const query = {
       body:{
          collectionName: "site",
-         site_db_name: "websites",
+         requestContext: {
+            site_db_name: "websites",
+         }
       },
       query: {
          site_db_name: site_name,

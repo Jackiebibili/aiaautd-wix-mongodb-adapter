@@ -31,7 +31,7 @@ exports.removeItem = async (req, res, next, dbClient) => {
 }
 
 exports.countItems = async (req, res, next, dbClient) => {
-   const countResult = await Storage.count(req.body, dbClient)
+   const countResult = await Storage.count(req, dbClient)
 
    res.status(200).json(countResult)
 }

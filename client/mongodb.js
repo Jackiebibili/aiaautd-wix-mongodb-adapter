@@ -1,48 +1,22 @@
 const NotFoundError = require('../model/error/not-found');
 const AlreadyExistsError = require('../model/error/already-exists');
 const mongoUtil = require('./mongoUtil');
-const { sortMap, filterMap, defaultSort } = require('../client/query_support/options')
 
 exports.query = async (site_db_name, collectionName, query, dbClient) => {
    //get mongodb collection ref
    const mongo = await mongoUtil.getDb(site_db_name, dbClient);
    const collRef = mongo.collection(collectionName);
 
-   //formulate query and sort objects
-   const filter = query.filter.reduce((acc, obj) => {
-      const controller = filterMap.get(obj.key).parser;
-      const queryObject = controller({[obj.key]: obj.value});
-      return {
-         query: {
-            ...acc.query,
-            ...queryObject.query,
-         },
-         aggregate: {
-            ...acc.aggregate,
-            ...queryObject.aggregate,
-         },
-      };
-   }, {});
-
-   let sort = query.sort.reduce((acc, obj) => {
-      const controller = sortMap.get(obj.key).parser;
-      const sortObject = controller(obj);
-      return {
-         sort: {
-            ...acc.sort,
-            ...sortObject.sort,
-         },
-      };
-   }, {});   
-   //empty sort object --apply default sort object
-   if(!sort) {
-      sort = defaultSort();
-   }
-
-   return collRef.find(filter.query, filter.aggregate)
-                     .sort(sort.sort)
+   return collRef.find(query.filter.query, query.filter.aggregate)
+                     .sort(query.sort.sort)
                      .skip(parseInt(query.skip))
-                     .limit(parseInt(query.limit));
+                     .limit(parseInt(query.limit))
+                     .toArray(); //get a promise
+}
+
+exports.count = async(site_db_name, collectionName, query, dbClient) => {
+   const mongo = await mongoUtil.getDb(site_db_name, dbClient);
+   return mongo.collection(collectionName).countDocuments(query.filter.query);
 }
 
 exports.get = async (site_db_name, collectionName, itemId, dbClient) => {

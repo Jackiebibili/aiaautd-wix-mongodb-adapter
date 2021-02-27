@@ -1,34 +1,34 @@
 const uuid = require('uuid').v4;
 const client = require('../client/mongodb');
 const BadRequestError = require('../model/error/bad-request');
-const { parseFilter } = require('../client/query_support/filter-parser')
-const { parseSort } = require('../client/query_support/sort-parser')
+const { getFilters } = require('../client/query_support/filter-parser')
+const { getSort } = require('../client/query_support/sort-parser')
 
 exports.find = async (req, dbClient) => {
    const payload = req.body;
    const collectionName = payload.collectionName;
-   const query = { /*filter(which contains aggregate), sort,*/ skip, limit } = req.query;
-   // const site_db_name = payload.requestContext ? payload.requestContext.site_db_name : query.site_db_name;
-   const site_db_name = payload.requestContext? payload.requestContext.site_db_name : payload.site_db_name;
+   const query = req.query;
+   const site_db_name = payload.requestContext.site_db_name;
    
    //db identification
    if (!collectionName)
       throw new BadRequestError('Missing collectionName in request body')
-   if (!site_db_name) {
+   if (!site_db_name)
       throw new BadRequestError('Missing siteName in request body');
-   }
 
-   //must-have filters
-   if (!query.skip && query.skip < 0)
+   //must-have skip and limit values
+   if (!query.skip && query.skip != 0)
       throw new BadRequestError('Missing skip in request body')
-   if (!query.limit) throw new BadRequestError('Missing limit in request body')
+   if (!query.limit) 
+      throw new BadRequestError('Missing limit in request body')
 
-   //get filter or sort options --filter for valid options
-   //default empty array
-   query.filter = parseFilter(req.query);
-   query.sort = parseSort(req.query);
+   query.filter = getFilters(req.query);
+   query.sort   = getSort(req.query);
 
-   const results = await (await (client.query(site_db_name, collectionName, query, dbClient))).toArray();
+   const [numDocs, results] = await Promise.all(
+      [client.count(site_db_name, collectionName, query, dbClient),
+       client.query(site_db_name, collectionName, query, dbClient)]);
+
    const enhanced = results.map(doc => {
       return wrapDates({
          _id: doc.id,
@@ -38,13 +38,16 @@ exports.find = async (req, dbClient) => {
 
    return {
       items: enhanced,
-      totalCount: enhanced.length
+      totalCount: enhanced.length,
+      predicateMatches: numDocs,
+      skip: parseInt(query.skip),
+      limit: parseInt(query.limit),
    };
 }
 
 exports.get = async (payload, dbClient) => {
    const { collectionName, itemId } = payload;
-   const site_db_name = payload.requestContext? payload.requestContext.site_db_name : payload.site_db_name;
+   const site_db_name = payload.requestContext.site_db_name;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
    if (!itemId) throw new BadRequestError('Missing itemId in request body');
    if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
@@ -103,17 +106,20 @@ exports.remove = async (payload, dbClient) => {
    return { item: wrapDates(item) };
 }
 
-exports.count = async (payload, dbClient) => {
+exports.count = async (req, dbClient) => {
+   const payload = req.body;
    const { collectionName } = payload;
+   const query = req.query;
    const site_db_name = payload.requestContext.site_db_name;
+
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
    if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
 
-   const results = await (await client.query({ collectionName: collectionName, site_db_name: site_db_name, limit: 1000, skip: 0, select: 'id' }, dbClient)).toArray();
+   query.filter = getFilters(req.query);
 
-   return {
-      totalCount: results.length
-   };
+   const results = await client.count(site_db_name, collectionName, query, dbClient);
+
+   return { totalCount: results };
 }
 
 
