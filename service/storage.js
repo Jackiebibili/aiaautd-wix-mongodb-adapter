@@ -68,8 +68,7 @@ exports.get = async (payload, dbClient) => {
 
 exports.insert = async (payload, dbClient) => {
    let { site_db_name, collectionName, item } = payload;
-   site_db_name = payload.requestContext ? payload.requestContext.site_db_name :
-      site_db_name;
+   site_db_name = payload.requestContext.site_db_name;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
    if (!item) throw new BadRequestError('Missing item in request body');
    if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
@@ -82,8 +81,7 @@ exports.insert = async (payload, dbClient) => {
 
 exports.update = async (payload, dbClient) => {
    let { site_db_name, collectionName, item } = payload;
-   site_db_name = payload.requestContext ? payload.requestContext.site_db_name :
-      site_db_name;
+   site_db_name = payload.requestContext.site_db_name;
    if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
    if (!item) throw new BadRequestError('Missing item in request body');
    if (!site_db_name) throw new BadRequestError('Missing siteName in request body');

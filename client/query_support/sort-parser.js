@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const {sortMap, defaultSort} = require('./options');
 const BadRequestError = require('../../model/error/bad-request');
 
@@ -42,7 +43,7 @@ const formulateSortObject = (sort) => {
          },
       };
    }, {});
-   if(!sortObj) {
+   if(_.isEmpty(sortObj)) {
       return defaultSort();
    }
    return sortObj;
