@@ -8,7 +8,7 @@ exports.query = async (site_db_name, collectionName, query, dbClient) => {
    const collRef = mongo.collection(collectionName);
 
    return collRef.find(query.filter.query, query.filter.aggregate)
-                     .sort(query.sort)
+                     .sort(query.sort.sort)
                      .skip(parseInt(query.skip))
                      .limit(parseInt(query.limit))
                      .toArray(); //get a promise

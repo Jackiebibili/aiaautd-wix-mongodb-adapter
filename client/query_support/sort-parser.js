@@ -23,9 +23,11 @@ const parseSort = (sort) => {
       }
    }, []);
    return parsedOptions.reduce((array, key) => {
-      const num = sortMap.get(key).optionValues.get(sort[key]);
+      const mappedValue = sortMap.get(key);
+      const dbFieldName = mappedValue.dbFieldName;
+      const num = mappedValue.optionValues.get(sort[key]);
       if(num) {
-         return [...array, {key: key, value: num }]
+         return [...array, {key: key, dbFieldName, value: num }]
       } else {
          return array;
       }

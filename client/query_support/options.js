@@ -1,7 +1,7 @@
 function textIndexFilter(input) {
    const query = {
       $text: {
-         $search: "" + (input.eventTitle || input.location),
+         $search: "" + (input.eventTitle || input.eventLocation),
       },
    };
    const aggregate = {
@@ -15,9 +15,26 @@ function textIndexFilter(input) {
 
 function eventLeadNameFilter(input) {
    const query = {
-      "leads.leadId": input.leadId,
+      "leads.leadId": input.eventLeadId,
    };
-   return query;
+   return {query};
+   //return a filter object
+}
+
+function eventLeadNamesFilter(input) {
+   const res = {};
+   const inputObj = JSON.parse(input.eventLeadIds);
+   res[inputObj.operator] = inputObj.ids.map((id) => {
+      return eventLeadNameFilter({eventLeadId: id}).query;
+   });
+   return {query: res};
+}
+
+function eventFileFilter(input) {
+   const query = {
+      "files.fileId": input.eventFileId,
+   };
+   return {query};
    //return a filter object
 }
 
@@ -28,53 +45,71 @@ function fieldEqualityFilter(input) {
    return {query: pairs};
 }
 
+function eventTimeFilter(input) {
+   const eventTime = JSON.parse(input.eventTime);
+   const res = {};
+   res.query = {eventTime: {[eventTime.operator] : new Date(eventTime.date)}}
+   return res;
+}
+
 function defaultSort() {
-   const sort = {
-      eventTime: -1,
-      lastModifiedDate: -1,
+   return {
+      sort: {
+         eventTime: -1,
+         lastModifiedDate: -1,
+      }
    };
-   return sort;
 }
 
 function fieldSort(input) {
    return {
       sort: {
-         [input.key]: input.value,
-      },
+         [input.dbFieldName]: input.value,
+      }
    };
 }
 
 const sort_options = [
-   {optionKey: "lastModifiedDate", 
+   {optionKey: "sortByLastModifiedDate", 
+      dbFieldName: "lastModifiedDate",
       optionValues: [{s: "ascending", number: 1}, {s:"descending", number: -1}], 
       parser: fieldSort, 
-      mutualExclusive: [{optionKey: "eventTime"}]
+      mutualExclusive: []
    },
-   {optionKey: "eventTime", 
+   {optionKey: "sortByEventTime", 
+      dbFieldName: "eventTime",
       optionValues: [{s: "ascending", number: 1}, {s:"descending", number: -1}], 
       parser: fieldSort, 
-      mutualExclusive: [{optionKey: "lastModifiedDate"}]
+      mutualExclusive: []
    },
 ];
 
 const filter_options = [
    {optionKey: "eventTitle", 
       parser: textIndexFilter, 
-      mutualExclusive: [{optionKey: "eventLeadName"}, {optionKey: "eventLocation"}, {optionKey: "eventType"}, {optionKey: "eventTag"}]
+      mutualExclusive: [{optionKey: "eventLocation"}]
    },
-   {optionKey: "eventLeadName",  
-   parser: eventLeadNameFilter, 
-      mutualExclusive: [{optionKey: "eventTitle"}, {optionKey: "eventLocation"}, {optionKey: "eventType"}, {optionKey: "eventTag"}]
+   {optionKey: "eventLeadIds",  
+   parser: eventLeadNamesFilter, 
+      mutualExclusive: []
+   },
+   {optionKey: "eventFileId",  
+   parser: eventFileFilter, 
+      mutualExclusive: []
    },
    {optionKey: "eventLocation",  
    parser: textIndexFilter, 
-      mutualExclusive: [{optionKey: "eventLeadName"}, {optionKey: "eventTitle"}, {optionKey: "eventType"}, {optionKey: "eventTag"}]
+      mutualExclusive: [{optionKey: "eventTitle"}]
    },
    {optionKey: "eventType",  
-      mutualExclusive: [{optionKey: "eventLeadName"}, {optionKey: "eventLocation"}, {optionKey: "eventTitle"}, {optionKey: "eventTag"}]
+      mutualExclusive: [{optionKey: "eventLeadIds"}, {optionKey: "eventLocation"}, {optionKey: "eventTitle"}, {optionKey: "eventTag"}, {optionKey: "eventFileId"}]
    },
    {optionKey: "eventTag",  
-      mutualExclusive: [{optionKey: "eventLeadName"}, {optionKey: "eventLocation"}, {optionKey: "eventType"}, {optionKey: "eventTitle"}]
+      mutualExclusive: [{optionKey: "eventLeadIds"}, {optionKey: "eventLocation"}, {optionKey: "eventType"}, {optionKey: "eventTitle"}, {optionKey: "eventFileId"}]
+   },
+   {optionKey: "eventTime",
+   parser: eventTimeFilter,  
+      mutualExclusive: []
    },
    {optionKey: "site_db_name", 
    parser: fieldEqualityFilter,
