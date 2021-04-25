@@ -8,11 +8,20 @@ module.exports = (dbClient) => {
       .get(async (req, res) => {
          const site_name = req.query.site_db_name;
          const id = req.query.id;
+         if(!ObjectId.isValid(id)) {
+            throw Error("forbidden access");
+         }
 
          const gfs = gfsUtil.getGfs(dbClient, site_name);
-         const files = await (await gfs.find({ "_id": ObjectId(id) })).toArray();
+         const files = await gfs.find({ "_id": ObjectId(id) }).toArray()
+            .catch(err => {
+               res.status(201).json({
+                  success: false,
+                  message: 'request error'
+               });
+            });
          if (!files || files.length === 0) {
-            return res.status(200).json({
+            res.status(200).json({
                success: true,
                message: 'No files available'
             });

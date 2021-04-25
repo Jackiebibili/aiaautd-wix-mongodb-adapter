@@ -13,7 +13,7 @@ const { ObjectId } = require('mongodb');
 module.exports = (dbClient) => {
    /**Middleware used to validate non-empty site-name */
    imageRouter.use('/', async (req, res, next) => {
-      const site_name = req.body.requestContext.site_db_name;
+      const site_name = req.query.site_db_name;
       if (!site_name) {
          throw new BadRequestError("Missing request content");
       }
@@ -21,8 +21,8 @@ module.exports = (dbClient) => {
    });
 
    /**Middleware used to validate non-empty file caption in get or insert path*/
-   imageRouter.use('/get|insert', async (req, res, next) => {
-      const caption = req.body.caption;
+   imageRouter.use('/insert', async (req, res, next) => {
+      const caption = req.query.caption;
       if (!caption) {
          throw new BadRequestError("Missing request content");
       }
@@ -33,8 +33,9 @@ module.exports = (dbClient) => {
    /**Upload and retrieve file from/to File collection */
    imageRouter.route('/insert')
       .post(async (req, res) => {
-         const site_name = req.body.requestContext.site_db_name;
-         const caption = req.body.caption;
+         const site_name = req.query.site_db_name;
+         const caption = req.query.caption;
+         const department = req.query.department;
          //establish connection to the collection, reusing the dbClient
          const mongo = mongodbUtil.getDb(site_name, dbClient);
          const collRef = mongo.collection('file-label');
@@ -43,7 +44,7 @@ module.exports = (dbClient) => {
          let file = await collRef.findOne({ caption: caption });
          //caption matches
          if (file) {
-            return res.status(200).json({
+            return res.status(409).json({
                success: false,
                message: 'File already exists'
             });
@@ -61,6 +62,7 @@ module.exports = (dbClient) => {
             const newFile = {
                _id: uuid(),
                caption: caption,
+               department: [department],
                filename: req.file.filename,
                fileId: req.file.id
             };
