@@ -86,9 +86,9 @@ exports.update = async (payload, dbClient) => {
    if (!item) throw new BadRequestError('Missing item in request body');
    if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
 
-   await client.update(site_db_name, collectionName, extractDates(item), dbClient);
+   const res = await client.update(site_db_name, collectionName, extractDates(item), dbClient);
 
-   return { item: wrapDates(item) };
+   return { item: wrapDates(res["ops"]) };
 }
 
 exports.remove = async (payload, dbClient) => {

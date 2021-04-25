@@ -29,10 +29,11 @@ let client;
       app.use(cors());
       //parse request's json body
       app.use(express.json());
-      app.use(express.urlencoded({extended: true}))
+      app.use(express.urlencoded({extended: false}))
 
       //get images without authentication
       app.use('/file', imageByIdRouter(client));
+      app.use('/file', fileRouter(client));
 
       /* ignore direct access to the interface through GET*/
       /////////////////////////////////////////////////////////
@@ -46,7 +47,6 @@ let client;
       app.use(authMiddleware(client));
       
       //use multer middleware
-      app.use('/file', fileRouter(client));
 
       //new routes for BLOGS, specifically
       app.post('/data/blogs/find', wrapError(blogs.getBlogEntry, client));

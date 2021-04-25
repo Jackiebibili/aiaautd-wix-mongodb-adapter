@@ -42,10 +42,11 @@ exports.delete = async (site_db_name, collectionName, itemId, dbClient) => {
    }
 }
 
-exports.update = async (site_db_name, collectionName, item, dbClient, upsert = true) => {
+exports.update = async (site_db_name, collectionName, item, dbClient, upsert = false) => {
    try {
       const mongo = await mongoUtil.getDb(site_db_name, dbClient);
-      await mongo.collection(collectionName).replaceOne({ "_id": item._id }, item, { upsert: upsert });
+      const old = await exports.get(site_db_name, collectionName, item._id, dbClient);
+      return mongo.collection(collectionName).replaceOne({ "_id": item._id }, {...old, ...item}, { upsert: upsert });
    } catch (err) {
       //update not found
       throw new NotFoundError("The updated item is not found");
