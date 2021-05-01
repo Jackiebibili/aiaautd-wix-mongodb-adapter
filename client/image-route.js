@@ -12,7 +12,7 @@ const { ObjectId } = require('mongodb');
 
 module.exports = (dbClient) => {
    /**Middleware used to validate non-empty site-name */
-   imageRouter.use('/', async (req, res, next) => {
+   imageRouter.use('/insert', async (req, res, next) => {
       const site_name = req.query.site_db_name;
       if (!site_name) {
          throw new BadRequestError("Missing request content");

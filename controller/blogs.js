@@ -32,8 +32,8 @@ exports.getBlogEntry = async(req, res, next, dbClient) => {
    const fullLeads = leadIds.map((leadsId) => {
       return getListOfItems(leadsId, 'officers', req.body.requestContext.site_db_name, dbClient);
    })
-   const files = await Promise.all(fullFiles);
-   const leads = await Promise.all(fullLeads);
+   const [files, leads] = await Promise.all([fullFiles, fullLeads]);
+   //const  = await Promise.all(fullLeads);
    getBlog.items = getBlog.items.map((item, idx) => {
       return {...item, files: files[idx], leads: leads[idx]};
    });

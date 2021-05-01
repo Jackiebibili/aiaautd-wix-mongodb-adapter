@@ -8,13 +8,13 @@ exports.query = async (site_db_name, collectionName, query, dbClient) => {
    const collRef = mongo.collection(collectionName);
 
    return collRef.find(query.filter.query, query.filter.aggregate)
-                     .sort(query.sort.sort)
-                     .skip(parseInt(query.skip))
-                     .limit(parseInt(query.limit))
-                     .toArray(); //get a promise
+      .sort(query.sort.sort)
+      .skip(parseInt(query.skip))
+      .limit(parseInt(query.limit))
+      .toArray(); //get a promise
 }
 
-exports.count = async(site_db_name, collectionName, query, dbClient) => {
+exports.count = async (site_db_name, collectionName, query, dbClient) => {
    const mongo = await mongoUtil.getDb(site_db_name, dbClient);
    return mongo.collection(collectionName).countDocuments(query.filter.query);
 }
@@ -35,7 +35,7 @@ exports.listCollectionIds = async (site_db_name, dbClient) => {
 exports.delete = async (site_db_name, collectionName, itemId, dbClient) => {
    try {
       const mongo = await mongoUtil.getDb(site_db_name, dbClient);
-      await mongo.collection(collectionName).deleteOne({ "_id": itemId })
+      return await mongo.collection(collectionName).findOneAndDelete({ "_id": itemId })
    } catch (err) {
       //delete not found
       throw new NotFoundError("The deleted item is not found");
@@ -46,7 +46,7 @@ exports.update = async (site_db_name, collectionName, item, dbClient, upsert = f
    try {
       const mongo = await mongoUtil.getDb(site_db_name, dbClient);
       const old = await exports.get(site_db_name, collectionName, item._id, dbClient);
-      return mongo.collection(collectionName).replaceOne({ "_id": item._id }, {...old, ...item}, { upsert: upsert });
+      return mongo.collection(collectionName).replaceOne({ "_id": item._id }, { ...old, ...item }, { upsert: upsert });
    } catch (err) {
       //update not found
       throw new NotFoundError("The updated item is not found");

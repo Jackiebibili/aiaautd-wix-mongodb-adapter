@@ -8,6 +8,7 @@ const items = require('./controller/items');
 const schemas = require('./controller/schemas');
 const provision = require('./controller/provision');
 const blogs = require('./controller/blogs');
+const files = require('./controller/files');
 const mongoUtil = require('./client/mongoUtil');
 const { wrapError, errorMiddleware } = require('./utils/error')
 const authMiddleware = require('./utils/auth')
@@ -25,11 +26,11 @@ let client;
    try {
       client = await mongoUtil.getClient();
       console.log('===MongoDB connected===');
-      
+
       app.use(cors());
       //parse request's json body
       app.use(express.json());
-      app.use(express.urlencoded({extended: false}))
+      app.use(express.urlencoded({ extended: false }))
 
       //get images without authentication
       app.use('/file', imageByIdRouter(client));
@@ -45,8 +46,9 @@ let client;
 
       //secretKey authentication
       app.use(authMiddleware(client));
-      
-      //use multer middleware
+
+      //routes for gridfs operations (e.g. delete)
+      app.post('/file/delete', wrapError(files.deleteOneFile, client));
 
       //new routes for BLOGS, specifically
       app.post('/data/blogs/find', wrapError(blogs.getBlogEntry, client));
