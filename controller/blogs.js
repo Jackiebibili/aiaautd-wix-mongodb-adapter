@@ -1,15 +1,15 @@
 const Storage = require('../service/storage')
 
-exports.getBlogEntry = async(req, res, next, dbClient) => {
+exports.getBlogEntry = async (req, res, next, dbClient) => {
    const getBlog = await Storage.find(req, dbClient);
-   if(!getBlog.items) {
+   if (!getBlog.items) {
       //no items - return an empty array
       res.status(200).json(getBlog);
    }
    //restore the files info by id
    const fileIds = getBlog.items.map((item) => {
-      return item.files.reduce((acc, arr) =>{
-         if(arr.fileId) {
+      return item.files.reduce((acc, arr) => {
+         if (arr.fileId) {
             return [...acc, arr.fileId];
          } else {
             return acc;
@@ -22,7 +22,7 @@ exports.getBlogEntry = async(req, res, next, dbClient) => {
    //restore the leads info by id
    const leadIds = getBlog.items.map((item) => {
       return item.leads.reduce((acc, arr) => {
-         if(arr.leadId) {
+         if (arr.leadId) {
             return [...acc, arr.leadId];
          } else {
             return acc;
@@ -32,10 +32,11 @@ exports.getBlogEntry = async(req, res, next, dbClient) => {
    const fullLeads = leadIds.map((leadsId) => {
       return getListOfItems(leadsId, 'officers', req.body.requestContext.site_db_name, dbClient);
    })
-   const [files, leads] = await Promise.all([fullFiles, fullLeads]);
-   //const  = await Promise.all(fullLeads);
+   //const files = await Promise.all(fullFiles);
+   //const leads = await Promise.all(fullLeads);
+   const [files, leads] = await Promise.all([Promise.all(fullFiles), Promise.all(fullLeads)]);
    getBlog.items = getBlog.items.map((item, idx) => {
-      return {...item, files: files[idx], leads: leads[idx]};
+      return { ...item, files: files[idx], leads: leads[idx] };
    });
 
    //return json response
@@ -53,7 +54,7 @@ const getListOfItems = async (ids, collectionName, site_db_name, dbClient) => {
          {
             itemId: id,
             collectionName,
-            requestContext: {site_db_name}
+            requestContext: { site_db_name }
          }, dbClient);
    });
    const results = await Promise.all(items);
