@@ -9,7 +9,7 @@ exports.find = async (req, dbClient) => {
    const collectionName = payload.collectionName;
    const query = req.query;
    const site_db_name = payload.requestContext.site_db_name;
-   
+
    //db identification
    if (!collectionName)
       throw new BadRequestError('Missing collectionName in request body')
@@ -19,15 +19,15 @@ exports.find = async (req, dbClient) => {
    //must-have skip and limit values
    if (!query.skip && query.skip != 0)
       throw new BadRequestError('Missing skip in request body')
-   if (!query.limit) 
+   if (!query.limit)
       throw new BadRequestError('Missing limit in request body')
 
    query.filter = getFilters(req.query);
-   query.sort   = getSort(req.query);
+   query.sort = getSort(req.query);
 
    const [numDocs, results] = await Promise.all(
       [client.count(site_db_name, collectionName, query, dbClient),
-       client.query(site_db_name, collectionName, query, dbClient)]);
+      client.query(site_db_name, collectionName, query, dbClient)]);
 
    const enhanced = results.map(doc => {
       return wrapDates({
@@ -55,7 +55,7 @@ exports.get = async (payload, dbClient) => {
    const document = await client.get(site_db_name, collectionName, itemId, dbClient);
 
    if (!document) {
-      throw new Error(`item ${itemId} not found`);
+      throw new Error(`item ${itemId} in ${collectionName} not found`);
    }
 
    return {
