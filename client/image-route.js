@@ -58,13 +58,14 @@ module.exports = (dbClient) => {
             } else if (err) {
                throw Error("Unknow error thrown");
             }
-
             const newFile = {
                _id: uuid(),
                caption: caption,
                department: [department],
                filename: req.file.filename,
-               fileId: req.file.id
+               fileId: req.file.id,
+               lastModifiedDate: new Date(parseInt(req.body.mtime)),
+               lastActivityDate: req.file.uploadDate,
             };
 
             file = await collRef.insertOne(newFile);
