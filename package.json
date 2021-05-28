@@ -15,7 +15,7 @@
   "author": "",
   "license": "ISC",
   "lint-staged": {
-    "*/**/*.{js,html}": [
+    "**/*.{js,html}": [
       "prettier --write",
       "git add"
     ]
