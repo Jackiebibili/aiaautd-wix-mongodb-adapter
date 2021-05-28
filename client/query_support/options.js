@@ -12,6 +12,7 @@ function eventTextIndexFilter(input) {
     },
   }; // no longer needed in mongodb 4.4
   return { query, aggregate };
+  // return a filter object
 }
 
 function fileTextIndexFilter(input) {
