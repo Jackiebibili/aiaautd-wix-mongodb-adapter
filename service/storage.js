@@ -1,167 +1,200 @@
 const uuid = require('uuid').v4;
 const client = require('../client/mongodb');
 const BadRequestError = require('../model/error/bad-request');
-const { getFilters } = require('../client/query_support/filter-parser')
-const { getSort } = require('../client/query_support/sort-parser')
+const { getFilters } = require('../client/query_support/filter-parser');
+const { getSort } = require('../client/query_support/sort-parser');
 const QueryParamsAggregateUndirectedGraph = require('../client/query_support/query-params-relation');
 const mutuallyExclusiveTestObject = new QueryParamsAggregateUndirectedGraph();
 
 exports.find = async (req, dbClient) => {
-   const payload = req.body;
-   const collectionName = payload.collectionName;
-   const query = req.query;
-   const site_db_name = payload.requestContext.site_db_name;
-   const skip = query.skip, limit = query.limit;
+  const payload = req.body;
+  const collectionName = payload.collectionName;
+  const query = req.query;
+  const site_db_name = payload.requestContext.site_db_name;
+  const skip = query.skip;
+  const limit = query.limit;
 
-   //db identification
-   if (!collectionName)
-      throw new BadRequestError('Missing collectionName in request body')
-   if (!site_db_name)
-      throw new BadRequestError('Missing siteName in request body');
+  // db identification
+  if (!collectionName)
+    throw new BadRequestError('Missing collectionName in request body');
+  if (!site_db_name)
+    throw new BadRequestError('Missing siteName in request body');
 
-   //must-have skip and limit values
-   if (!skip && skip != 0)
-      throw new BadRequestError('Missing skip in request body')
-   if (!limit && limit != 0)
-      throw new BadRequestError('Missing limit in request body')
+  // must-have skip and limit values
+  if (typeof skip === 'undefined')
+    throw new BadRequestError('Missing skip in request body');
+  if (typeof limit === 'undefined')
+    throw new BadRequestError('Missing limit in request body');
 
-   //mutually exclusive test
-   const newQuery = mutuallyExclusiveTestObject.pruneQueryParams(query);
+  // mutually exclusive test
+  const newQuery = mutuallyExclusiveTestObject.pruneQueryParams(query);
 
-   const formulatedQuery = {
-      filter: getFilters(newQuery),
-      sort: getSort(newQuery),
-      skip,
-      limit,
-   };
+  const formulatedQuery = {
+    filter: getFilters(newQuery),
+    sort: getSort(newQuery),
+    skip,
+    limit,
+  };
 
-   const [numDocs, results] = await Promise.all(
-      [client.count(site_db_name, collectionName, formulatedQuery, dbClient),
-      client.query(site_db_name, collectionName, formulatedQuery, dbClient)]);
+  const [numDocs, results] = await Promise.all([
+    client.count(site_db_name, collectionName, formulatedQuery, dbClient),
+    client.query(site_db_name, collectionName, formulatedQuery, dbClient),
+  ]);
 
-   const enhanced = results.map(doc => {
-      return wrapDates({
-         _id: doc.id,
-         ...doc
-      })
-   });
+  const enhanced = results.map((doc) => {
+    return wrapDates({
+      _id: doc.id,
+      ...doc,
+    });
+  });
 
-   return {
-      items: enhanced,
-      totalCount: enhanced.length,
-      predicateMatches: numDocs,
-      skip: parseInt(skip),
-      limit: parseInt(limit),
-      queryObj: newQuery,
-   };
-}
+  return {
+    items: enhanced,
+    totalCount: enhanced.length,
+    predicateMatches: numDocs,
+    skip: parseInt(skip),
+    limit: parseInt(limit),
+    queryObj: newQuery,
+  };
+};
 
 exports.get = async (payload, dbClient) => {
-   const { collectionName, itemId } = payload;
-   const site_db_name = payload.requestContext.site_db_name;
-   if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
-   if (!itemId) throw new BadRequestError('Missing itemId in request body');
-   if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
+  const { collectionName, itemId } = payload;
+  const site_db_name = payload.requestContext.site_db_name;
+  if (!collectionName)
+    throw new BadRequestError('Missing collectionName in request body');
+  if (!itemId) throw new BadRequestError('Missing itemId in request body');
+  if (!site_db_name)
+    throw new BadRequestError('Missing siteName in request body');
 
-   const document = await client.get(site_db_name, collectionName, itemId, dbClient);
+  const document = await client.get(
+    site_db_name,
+    collectionName,
+    itemId,
+    dbClient
+  );
 
-   if (!document) {
-      throw new Error(`item ${itemId} in ${collectionName} not found`);
-   }
+  if (!document) {
+    throw new Error(`item ${itemId} in ${collectionName} not found`);
+  }
 
-   return {
-      item: wrapDates({
-         _id: document.id,
-         ...document
-      })
-   }
-}
+  return {
+    item: wrapDates({
+      _id: document.id,
+      ...document,
+    }),
+  };
+};
 
 exports.insert = async (payload, dbClient) => {
-   let { site_db_name, collectionName, item } = payload;
-   site_db_name = payload.requestContext.site_db_name;
-   if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
-   if (!item) throw new BadRequestError('Missing item in request body');
-   if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
+  let { site_db_name, collectionName, item } = payload;
+  site_db_name = payload.requestContext.site_db_name;
+  if (!collectionName)
+    throw new BadRequestError('Missing collectionName in request body');
+  if (!item) throw new BadRequestError('Missing item in request body');
+  if (!site_db_name)
+    throw new BadRequestError('Missing siteName in request body');
 
-   if (!item._id) item._id = uuid();
-   await client.insert(site_db_name, collectionName, extractDates(item), dbClient);
+  if (!item._id) item._id = uuid();
+  await client.insert(
+    site_db_name,
+    collectionName,
+    extractDates(item),
+    dbClient
+  );
 
-   return { item: wrapDates(item) };
-}
+  return { item: wrapDates(item) };
+};
 
 exports.update = async (payload, dbClient) => {
-   let { site_db_name, collectionName, item } = payload;
-   site_db_name = payload.requestContext.site_db_name;
-   if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
-   if (!item) throw new BadRequestError('Missing item in request body');
-   if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
+  let { site_db_name, collectionName, item } = payload;
+  site_db_name = payload.requestContext.site_db_name;
+  if (!collectionName)
+    throw new BadRequestError('Missing collectionName in request body');
+  if (!item) throw new BadRequestError('Missing item in request body');
+  if (!site_db_name)
+    throw new BadRequestError('Missing siteName in request body');
 
-   const res = await client.update(site_db_name, collectionName, extractDates(item), dbClient);
+  const res = await client.update(
+    site_db_name,
+    collectionName,
+    extractDates(item),
+    dbClient
+  );
 
-   return { item: wrapDates(res["ops"]) };
-}
+  return { item: wrapDates(res.ops) };
+};
 
 exports.remove = async (payload, dbClient) => {
-   const { collectionName, itemId } = payload;
-   const site_db_name = payload.requestContext.site_db_name;
-   if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
-   if (!itemId) throw new BadRequestError('Missing itemId in request body');
-   if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
+  const { collectionName, itemId } = payload;
+  const site_db_name = payload.requestContext.site_db_name;
+  if (!collectionName)
+    throw new BadRequestError('Missing collectionName in request body');
+  if (!itemId) throw new BadRequestError('Missing itemId in request body');
+  if (!site_db_name)
+    throw new BadRequestError('Missing siteName in request body');
 
-   const item = await client.get(site_db_name, collectionName, itemId, dbClient);
-   await client.delete(site_db_name, collectionName, itemId, dbClient);
+  const item = await client.get(site_db_name, collectionName, itemId, dbClient);
+  await client.delete(site_db_name, collectionName, itemId, dbClient);
 
-   return { item: wrapDates(item) };
-}
+  return { item: wrapDates(item) };
+};
 
 exports.count = async (req, dbClient) => {
-   const payload = req.body;
-   const { collectionName } = payload;
-   const query = req.query;
-   const site_db_name = payload.requestContext.site_db_name;
+  const payload = req.body;
+  const { collectionName } = payload;
+  const query = req.query;
+  const site_db_name = payload.requestContext.site_db_name;
 
-   if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
-   if (!site_db_name) throw new BadRequestError('Missing siteName in request body');
+  if (!collectionName)
+    throw new BadRequestError('Missing collectionName in request body');
+  if (!site_db_name)
+    throw new BadRequestError('Missing siteName in request body');
 
-   query.filter = getFilters(req.query);
+  query.filter = getFilters(req.query);
 
-   const results = await client.count(site_db_name, collectionName, query, dbClient);
+  const results = await client.count(
+    site_db_name,
+    collectionName,
+    query,
+    dbClient
+  );
 
-   return { totalCount: results };
-}
+  return { totalCount: results };
+};
 
+const extractDates = (item) => {
+  // eslint-disable-next-line array-callback-return
+  Object.keys(item).map((key) => {
+    const value = item[key];
+    // eslint-disable-next-line array-callback-return
+    if (value === null) return;
 
-const extractDates = item => {
-   Object.keys(item).map(key => {
-      const value = item[key];
-      if (value === null) return;
-
-      const reISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/;
-      if (typeof value === 'string') {
-         const re = reISO.exec(value);
-         if (re) {
-            item[key] = new Date(value);
-         }
+    const reISO =
+      /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/;
+    if (typeof value === 'string') {
+      const re = reISO.exec(value);
+      if (re) {
+        item[key] = new Date(value);
       }
-      //if wrapped in the object, accessed by the name `$date`
-      if (typeof value === 'object' && '$date' in value) {
-         item[key] = new Date(value['$date']);
-      }
-   })
+    }
+    // if wrapped in the object, accessed by the name `$date`
+    if (typeof value === 'object' && '$date' in value) {
+      item[key] = new Date(value.$date);
+    }
+  });
 
-   return item
+  return item;
+};
 
-}
+const wrapDates = (item) => {
+  // eslint-disable-next-line array-callback-return
+  Object.keys(item).map((key) => {
+    const value = item[key];
+    if (value instanceof Date) {
+      item[key] = { $date: item[key].toString() };
+    }
+  });
 
-const wrapDates = item => {
-   Object.keys(item)
-      .map(key => {
-         const value = item[key];
-         if (value instanceof Date) {
-            item[key] = { $date: item[key].toString() }
-         }
-      })
-
-   return item;
-}
+  return item;
+};

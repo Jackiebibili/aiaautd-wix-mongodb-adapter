@@ -1,1 +1,1 @@
-module.exports = class BadRequestError extends Error {}
+module.exports = class BadRequestError extends Error {};

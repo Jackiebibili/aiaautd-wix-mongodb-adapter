@@ -1,1 +1,1 @@
-module.exports = class UnknownDB extends Error { }
+module.exports = class UnknownDB extends Error {};
