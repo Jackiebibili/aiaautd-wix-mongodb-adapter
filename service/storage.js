@@ -3,12 +3,15 @@ const client = require('../client/mongodb');
 const BadRequestError = require('../model/error/bad-request');
 const { getFilters } = require('../client/query_support/filter-parser')
 const { getSort } = require('../client/query_support/sort-parser')
+const QueryParamsAggregateUndirectedGraph = require('../client/query_support/query-params-relation');
+const mutuallyExclusiveTestObject = new QueryParamsAggregateUndirectedGraph();
 
 exports.find = async (req, dbClient) => {
    const payload = req.body;
    const collectionName = payload.collectionName;
    const query = req.query;
    const site_db_name = payload.requestContext.site_db_name;
+   const skip = query.skip, limit = query.limit;
 
    //db identification
    if (!collectionName)
@@ -17,17 +20,24 @@ exports.find = async (req, dbClient) => {
       throw new BadRequestError('Missing siteName in request body');
 
    //must-have skip and limit values
-   if (!query.skip && query.skip != 0)
+   if (!skip && skip != 0)
       throw new BadRequestError('Missing skip in request body')
-   if (!query.limit)
+   if (!limit && limit != 0)
       throw new BadRequestError('Missing limit in request body')
 
-   query.filter = getFilters(req.query);
-   query.sort = getSort(req.query);
+   //mutually exclusive test
+   const newQuery = mutuallyExclusiveTestObject.pruneQueryParams(query);
+
+   const formulatedQuery = {
+      filter: getFilters(newQuery),
+      sort: getSort(newQuery),
+      skip,
+      limit,
+   };
 
    const [numDocs, results] = await Promise.all(
-      [client.count(site_db_name, collectionName, query, dbClient),
-      client.query(site_db_name, collectionName, query, dbClient)]);
+      [client.count(site_db_name, collectionName, formulatedQuery, dbClient),
+      client.query(site_db_name, collectionName, formulatedQuery, dbClient)]);
 
    const enhanced = results.map(doc => {
       return wrapDates({
@@ -40,8 +50,9 @@ exports.find = async (req, dbClient) => {
       items: enhanced,
       totalCount: enhanced.length,
       predicateMatches: numDocs,
-      skip: parseInt(query.skip),
-      limit: parseInt(query.limit),
+      skip: parseInt(skip),
+      limit: parseInt(limit),
+      queryObj: newQuery,
    };
 }
 
