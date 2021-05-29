@@ -26,6 +26,8 @@ function fileTextIndexFilter(input) {
     },
   };
   return { query, aggregate };
+
+  
 }
 
 function officerTextIndexFilter(input) {

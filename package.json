@@ -13,7 +13,7 @@
     "lint": "eslint '**/*.js'",
     "lint:fix": "prettier-eslint '**/*.js' --write"
   },
-  "author": "",
+  "author": "Jack Jingxi Li",
   "license": "ISC",
   "husky": {
     "hooks": {
