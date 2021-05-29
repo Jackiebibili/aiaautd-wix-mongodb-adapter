@@ -27,6 +27,8 @@ function fileTextIndexFilter(input) {
   };
   return { query, aggregate };
 
+
+
   
 }
 
