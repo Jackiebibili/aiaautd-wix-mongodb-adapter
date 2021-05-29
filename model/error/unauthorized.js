@@ -1,1 +1,1 @@
-module.exports = class UnauthorizedError extends Error {}
+module.exports = class UnauthorizedError extends Error {};
