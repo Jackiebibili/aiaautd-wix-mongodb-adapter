@@ -10,13 +10,19 @@
     "start": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "debug": "nodemon --inspect app.js",
-    "precommit": "lint-staged"
+    "lint": "eslint '**/*.js'",
+    "lint:fix": "prettier-eslint '**/*.js' --write"
   },
   "author": "",
   "license": "ISC",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
   "lint-staged": {
-    "**/*.{js,html}": [
-      "prettier --write",
+    "*.js": [
+      "npm run lint:fix",
       "git add"
     ]
   },
@@ -47,6 +53,8 @@
     "husky": "^4.3.8",
     "lint-staged": "^11.0.0",
     "nodemon": "^2.0.7",
-    "prettier": "^2.3.0"
+    "prettier": "^2.3.0",
+    "prettier-eslint": "^12.0.0",
+    "prettier-eslint-cli": "^5.0.1"
   }
 }
