@@ -83,7 +83,7 @@ function fieldEqualityFilter(input) {
   return { query: pairs };
 }
 
-function eventTimeFilter(input) {
+function eventTimeTrimFilter(input) {
   // format: in_n_days (from now)
   const date = new Date();
   const eventTime = JSON.parse(input.eventTime);
@@ -106,6 +106,29 @@ function eventTimeFilter(input) {
   const res = {};
   res.query = { eventTime: { [eventTime.operator]: date } };
   return res;
+}
+
+function eventTimeFilter(input) {
+  const query = {
+    eventTime: { [input.operator]: input.eventTime },
+  };
+  return { query };
+}
+
+function eventTimeRangeFilter(input) {
+  const res = {};
+  const obj = JSON.parse(input['eventTime-range']);
+  const operator = obj.operator;
+  const start = new Date(obj.range.start);
+  const end = new Date(obj.range.end);
+
+  res[operator] = [
+    { date: start, operator: '$gte' },
+    { date: end, operator: '$lt' },
+  ].map((obj) => {
+    return eventTimeFilter({ ...obj, eventTime: obj.date }).query;
+  });
+  return { query: res };
 }
 
 // function defaultSort() {
@@ -266,7 +289,18 @@ const filter_options = [
   },
   {
     optionKey: 'eventTime',
-    parser: eventTimeFilter,
+    parser: eventTimeTrimFilter,
+    mutualExclusive: [
+      { optionKey: 'sortByLastModifiedDate' },
+      { optionKey: 'sortByTextMatchScore' },
+      { optionKey: 'sortByLastActivityDate' },
+      { optionKey: 'sortByCaption' },
+    ],
+    priority: PRIORITY.MEDIUM,
+  },
+  {
+    optionKey: 'eventTime-range',
+    parser: eventTimeRangeFilter, // {'eventTime-range': { range: {start: Date, end: Date}, operator: '$and'}}
     mutualExclusive: [
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByTextMatchScore' },

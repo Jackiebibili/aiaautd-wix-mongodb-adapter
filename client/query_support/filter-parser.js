@@ -34,7 +34,7 @@ const formulateQueryObject = (filter) => {
     const key = Object.keys(queryObject.query)[0];
     if (
       acc.query &&
-      Object.prototype.hasOwnProperty.apply(
+      Object.prototype.hasOwnProperty.call(
         acc.query,
         key
       ) /* acc.query.hasOwnProperty(key) */

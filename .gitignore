@@ -1,0 +1,11 @@
+.vscode/
+client/support/
+node_modules/
+keys/
+temp/
+.env
+build.bat
+
+build
+npm-debug.log
+.DS_Store

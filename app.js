@@ -49,7 +49,8 @@ let client;
     app.post('/file/delete', wrapError(files.deleteOneFile, client));
 
     // new routes for BLOGS, specifically
-    app.post('/data/blogs/find', wrapError(blogs.getBlogEntry, client));
+    app.post('/data/blogs/find', wrapError(blogs.findBlogEntry, client));
+    app.post('/data/blogs/get', wrapError(blogs.getBlogEntry, client));
     app.post('/data/blogs/update', wrapError(blogs.updateBlogEntry, client));
     // routes
     app.post('/schemas/find', wrapError(schemas.findSchemas, client));
