@@ -1,9 +1,10 @@
-const uuid = require('uuid').v4;
+// const uuid = require('uuid').v4;
 const client = require('../client/mongodb');
 const BadRequestError = require('../model/error/bad-request');
 const { getFilters } = require('../client/query_support/filter-parser');
 const { getSort } = require('../client/query_support/sort-parser');
 const QueryParamsAggregateUndirectedGraph = require('../client/query_support/query-params-relation');
+const { commonFields } = require('../constants/commonDataSchema');
 const mutuallyExclusiveTestObject = new QueryParamsAggregateUndirectedGraph();
 
 exports.find = async (req, dbClient) => {
@@ -95,7 +96,12 @@ exports.insert = async (payload, dbClient) => {
   if (!site_db_name)
     throw new BadRequestError('Missing siteName in request body');
 
-  if (!item._id) item._id = uuid();
+  // common data field default values
+  Object.entries(commonFields).forEach(([field, getDefaultValue]) => {
+    if (typeof item[field] === 'undefined') {
+      item[field] = getDefaultValue.call();
+    }
+  });
   await client.insert(
     site_db_name,
     collectionName,

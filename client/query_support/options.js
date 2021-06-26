@@ -188,6 +188,17 @@ const sort_options = [
     priority: PRIORITY.MEDIUM,
   },
   {
+    optionKey: 'sortByCreatedDate',
+    dbFieldName: 'createdDate',
+    optionValues: [
+      { s: 'ascending', number: 1 },
+      { s: 'descending', number: -1 },
+    ],
+    parser: fieldSort,
+    mutualExclusive: [{ optionKey: 'ALL_OTHER_SORT' }],
+    priority: PRIORITY.MEDIUM,
+  },
+  {
     optionKey: 'sortByEventTime',
     dbFieldName: 'eventTime',
     optionValues: [
@@ -231,6 +242,7 @@ const filter_options = [
       { optionKey: 'officer_name' },
       { optionKey: 'eventLocation' },
       { optionKey: 'sortByLastModifiedDate' },
+      { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByEventTime' },
       { optionKey: 'sortByLastActivityDate' },
       { optionKey: 'sortByCaption' },
@@ -244,7 +256,8 @@ const filter_options = [
     optionKey: 'eventLeadIds',
     parser: eventLeadNamesFilter,
     mutualExclusive: [
-      { optionKey: 'sortByLastModifiedDate' },
+      { optionKey: 'sortByTextMatchScore' },
+      { optionKey: 'sortByEventTime' },
       { optionKey: 'sortByLastActivityDate' },
       { optionKey: 'sortByCaption' },
     ], // exact match, no other collection sorting involved
@@ -255,6 +268,7 @@ const filter_options = [
     parser: eventFilesFilter,
     mutualExclusive: [
       { optionKey: 'sortByTextMatchScore' },
+      { optionKey: 'sortByEventTime' },
       { optionKey: 'sortByLastActivityDate' },
       { optionKey: 'sortByCaption' },
     ], // exact match, no other collection sorting involved
@@ -268,6 +282,7 @@ const filter_options = [
       { optionKey: 'officer_name' },
       { optionKey: 'eventTitle' },
       { optionKey: 'sortByLastModifiedDate' },
+      { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByEventTime' },
       { optionKey: 'sortByLastActivityDate' },
       { optionKey: 'sortByCaption' },
@@ -292,6 +307,7 @@ const filter_options = [
     parser: eventTimeTrimFilter,
     mutualExclusive: [
       { optionKey: 'sortByLastModifiedDate' },
+      { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByTextMatchScore' },
       { optionKey: 'sortByLastActivityDate' },
       { optionKey: 'sortByCaption' },
@@ -303,6 +319,7 @@ const filter_options = [
     parser: eventTimeRangeFilter, // {'eventTime-range': { range: {start: Date, end: Date}, operator: '$and'}}
     mutualExclusive: [
       { optionKey: 'sortByLastModifiedDate' },
+      { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByTextMatchScore' },
       { optionKey: 'sortByLastActivityDate' },
       { optionKey: 'sortByCaption' },
@@ -321,6 +338,7 @@ const filter_options = [
     mutualExclusive: [
       { optionKey: 'ALL_OTHER_FILTER' },
       { optionKey: 'sortByLastModifiedDate' },
+      { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByEventTime' },
       { optionKey: 'sortByLastActivityDate' },
       { optionKey: 'sortByCaption' },
@@ -336,6 +354,7 @@ const filter_options = [
     mutualExclusive: [
       { optionKey: 'ALL_OTHER_FILTER' },
       { optionKey: 'sortByLastModifiedDate' },
+      { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByEventTime' },
       { optionKey: 'sortByLastActivityDate' },
       { optionKey: 'sortByCaption' },
