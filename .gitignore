@@ -3,7 +3,6 @@ client/support/
 node_modules/
 keys/
 temp/
-.env
 build.bat
 
 build
