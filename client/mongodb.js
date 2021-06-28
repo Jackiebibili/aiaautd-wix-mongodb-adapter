@@ -66,7 +66,11 @@ exports.update = async (
     );
     return mongo
       .collection(collectionName)
-      .replaceOne({ _id: item._id }, { ...old, ...item }, { upsert: upsert });
+      .replaceOne(
+        { _id: item._id },
+        { ...old, ...item, lastModifiedDate: new Date() },
+        { upsert: upsert }
+      );
   } catch (err) {
     // update not found
     throw new NotFoundError('The updated item is not found');

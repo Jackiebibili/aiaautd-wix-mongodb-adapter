@@ -1,6 +1,6 @@
 const uuid = require('uuid').v4;
 
-exports.module = {
+module.exports = {
   commonFields: {
     _id: () => uuid(),
     createdDate: () => new Date(),
