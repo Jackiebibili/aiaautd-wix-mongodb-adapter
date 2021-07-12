@@ -8,6 +8,7 @@ const items = require('./controller/items');
 const schemas = require('./controller/schemas');
 const provision = require('./controller/provision');
 const blogs = require('./controller/blogs');
+const pureBlogs = require('./controller/pureBlog');
 const files = require('./controller/files');
 const mongoUtil = require('./client/mongoUtil');
 const { wrapError, errorMiddleware } = require('./utils/error');
@@ -52,6 +53,14 @@ let client;
     app.post('/data/blogs/find', wrapError(blogs.findBlogEntry, client));
     app.post('/data/blogs/get', wrapError(blogs.getBlogEntry, client));
     app.post('/data/blogs/update', wrapError(blogs.updateBlogEntry, client));
+    app.post(
+      '/data/pureBlogs/insert',
+      wrapError(pureBlogs.insertPureBlogEntry, client)
+    );
+    app.post(
+      '/data/pureBlogs/update',
+      wrapError(pureBlogs.updatePureBlogEntry, client)
+    );
     // routes
     app.post('/schemas/find', wrapError(schemas.findSchemas, client));
     app.post('/schemas/list', wrapError(schemas.listSchemas, client));
