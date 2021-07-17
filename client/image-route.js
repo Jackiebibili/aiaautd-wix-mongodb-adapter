@@ -1,14 +1,10 @@
 const express = require('express');
 const imageRouter = express.Router();
-// const GridFSBucket = require("mongodb").GridFSBucket;
 const uuid = require('uuid').v4;
-// const File = require('../model/file.model');
 const mongodbUtil = require('./mongoUtil');
-const uploadImage = require('./multer-image');
-// const gfsUtil = require('./gridfsUtil');
 const BadRequestError = require('../model/error/bad-request');
 const { MulterError } = require('multer');
-// const { ObjectId } = require('mongodb');
+const { uploadImage, upload } = require('./multer-image');
 
 module.exports = (dbClient) => {
   /** Middleware used to validate non-empty site-name */
@@ -30,16 +26,16 @@ module.exports = (dbClient) => {
   });
 
   /** Upload and retrieve file from/to File collection */
-  imageRouter.route('/insert').post(async (req, res) => {
+  imageRouter.route('/insert').post(upload.single('file'), async (req, res) => {
     const site_name = req.query.site_db_name;
     const caption = req.query.caption;
     const department = req.query.department;
-    // establish connection to the collection, reusing the dbClient
     const mongo = mongodbUtil.getDb(site_name, dbClient);
+
     const collRef = mongo.collection('file-label');
 
     // check duplicate filename (caption)
-    let file = await collRef.findOne({ caption: caption });
+    const file = await collRef.findOne({ caption: caption });
     // caption matches
     if (file) {
       return res.status(409).json({
@@ -48,30 +44,11 @@ module.exports = (dbClient) => {
       });
     }
 
-    // unique filename/caption
-    const uploadFile = uploadImage.upload(dbClient, site_name).single('file');
-    uploadFile(req, res, async (err) => {
-      if (err instanceof MulterError) {
-        throw err;
-      } else if (err) {
-        throw Error('Unknow error thrown');
-      }
-      const newFile = {
-        _id: uuid(),
-        caption: caption,
-        department: [department],
-        filename: req.file.filename,
-        fileId: req.file.id,
-        lastModifiedDate: new Date(parseInt(req.body.mtime)),
-        lastActivityDate: req.file.uploadDate,
-      };
+    const newFile = await uploadImage(req, res, collRef);
 
-      file = await collRef.insertOne(newFile);
-      res.status(200).json({
-        success: true,
-        detail: file.ops,
-      });
-      // .catch(err => { res.status(500).json(err); })
+    res.status(200).json({
+      success: true,
+      detail: newFile.ops,
     });
   });
 
