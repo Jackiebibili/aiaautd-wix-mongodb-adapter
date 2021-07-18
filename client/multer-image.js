@@ -1,32 +1,37 @@
-const crypto = require('crypto');
 const path = require('path');
-const multer = require('multer'); // multer is object
-const mongodbUtil = require('./mongoUtil');
+const multer = require('multer');
 const aws = require('aws-sdk');
-const multerS3 = require('multer-s3');
 const fs = require('fs');
-const uuid = require('uuid').v4;
+const Storage = require('../service/storage');
+
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
 // contain label
-const uploadImageLabel = (req, res, fileUrl, collRef) => {
+const uploadImageLabel = (req, fileUrl, dbClient) => {
+  const site_db_name = req.query.site_db_name;
   const caption = req.query.caption;
   const department = req.query.department;
 
   const newFile = {
-    _id: uuid(),
     caption: caption,
     department: [department],
     filename: `${req.file.filename}${path.extname(req.file.originalname)}`,
     fileId: fileUrl,
-    lastModifiedDate: new Date(parseInt(req.body.mtime)),
-    lastActivityDate: new Date(),
     fileSize: req.file.size,
+    lastModifiedDate: new Date(parseInt(req.body.mtime)),
   };
 
-  return collRef.insertOne(newFile);
+  return Storage.insert(
+    {
+      site_db_name,
+      collectionName: 'file-label',
+      item: newFile,
+    },
+    dbClient
+  );
 };
 
-const uploadImage = async (req, res, collRef) => {
+const uploadImage = (req, dbClient) => {
   aws.config.setPromisesDependency();
   aws.config.update({
     secretAccessKey: process.env.SECRET_ACCESS_KEY,
@@ -44,19 +49,19 @@ const uploadImage = async (req, res, collRef) => {
   };
 
   // upload files to aws.s3
-  const upload = s3.upload(params);
-  const data = await upload.promise();
-
-  /* if (err) {
-    console.log('Error occured while trying to upload to S3 bucket', err);
-  } */
-
-  if (data) {
-    fs.unlinkSync(req.file.path); // Empty temp folder
-    const locationUrl = data.Location;
-    return await uploadImageLabel(req, res, locationUrl, collRef);
-  }
+  return s3
+    .upload(params)
+    .promise()
+    .then((data) => {
+      fs.unlinkSync(req.file.path); // Empty temp folder
+      const locationUrl = data.Location; // file object public URL
+      return uploadImageLabel(req, locationUrl, dbClient);
+    });
 };
+
+/* if (err) {
+  console.log('Error occured while trying to upload to S3 bucket', err);
+} */
 
 /*
 const _storage = () => {
@@ -85,6 +90,6 @@ const _storage = () => {
 
 // get into router, do things(find duplicate), then upload
 module.exports = {
-  upload: multer({ dest: 'temp/', limits: { fieldSize: 25 * 1024 * 1024 } }),
+  upload: multer({ dest: 'temp/', limits: { fieldSize: MAX_FILE_SIZE } }),
   uploadImage: uploadImage,
 };
