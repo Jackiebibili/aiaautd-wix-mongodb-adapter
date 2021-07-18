@@ -4,7 +4,7 @@ const aws = require('aws-sdk');
 const fs = require('fs');
 const Storage = require('../service/storage');
 
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // contain label
 const uploadImageLabel = (req, fileUrl, dbClient) => {
@@ -92,6 +92,7 @@ const _storage = () => {
 
 // get into router, do things(find duplicate), then upload
 module.exports = {
-  upload: multer({ dest: 'temp/', limits: { fieldSize: MAX_FILE_SIZE } }),
+  upload: multer({ dest: 'temp/', limits: { fileSize: MAX_FILE_SIZE } }),
   uploadImage: uploadImage,
+  MAX_FILE_SIZE: MAX_FILE_SIZE,
 };

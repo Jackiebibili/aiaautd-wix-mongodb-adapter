@@ -1,7 +1,7 @@
 const express = require('express');
 const imageRouter = express.Router();
 const client = require('./mongodb');
-const { uploadImage, upload } = require('./multer-image');
+const { uploadImage, upload, MAX_FILE_SIZE } = require('./multer-image');
 const BadRequestError = require('../model/error/bad-request');
 const AlreadyExistsError = require('../model/error/already-exists');
 
@@ -45,8 +45,13 @@ module.exports = (dbClient) => {
       )
       .then((files) => {
         // check duplicate filename (caption)
-        if (files.length > 0)
+        if (files.length > 0) {
           throw new AlreadyExistsError('File already exists');
+        }
+        // check file size
+        if (req.file.size > MAX_FILE_SIZE) {
+          throw new Error('File is too large. Please limit to 10MB');
+        }
         return uploadImage(req, dbClient);
         // caption matches
       })
