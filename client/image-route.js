@@ -1,14 +1,15 @@
 const express = require('express');
 const imageRouter = express.Router();
-const uuid = require('uuid').v4;
-const mongodbUtil = require('./mongoUtil');
-const BadRequestError = require('../model/error/bad-request');
-const { MulterError } = require('multer');
+const client = require('./mongodb');
 const { uploadImage, upload } = require('./multer-image');
+const BadRequestError = require('../model/error/bad-request');
+const AlreadyExistsError = require('../model/error/already-exists');
+
+const fileLabelCollectionName = 'file-label';
 
 module.exports = (dbClient) => {
   /** Middleware used to validate non-empty site-name */
-  imageRouter.use('/insert', async (req, res, next) => {
+  imageRouter.use('/insert', (req, res, next) => {
     const site_name = req.query.site_db_name;
     if (!site_name) {
       throw new BadRequestError('Missing request content');
@@ -17,7 +18,7 @@ module.exports = (dbClient) => {
   });
 
   /** Middleware used to validate non-empty file caption in get or insert path */
-  imageRouter.use('/insert', async (req, res, next) => {
+  imageRouter.use('/insert', (req, res, next) => {
     const caption = req.query.caption;
     if (!caption) {
       throw new BadRequestError('Missing request content');
@@ -26,30 +27,48 @@ module.exports = (dbClient) => {
   });
 
   /** Upload and retrieve file from/to File collection */
-  imageRouter.route('/insert').post(upload.single('file'), async (req, res) => {
+  imageRouter.route('/insert').post(upload.single('file'), (req, res) => {
     const site_name = req.query.site_db_name;
     const caption = req.query.caption;
-    const department = req.query.department;
-    const mongo = mongodbUtil.getDb(site_name, dbClient);
 
-    const collRef = mongo.collection('file-label');
-
-    // check duplicate filename (caption)
-    const file = await collRef.findOne({ caption: caption });
-    // caption matches
-    if (file) {
-      return res.status(409).json({
-        success: false,
-        message: 'File already exists',
+    client
+      .query(
+        site_name,
+        fileLabelCollectionName,
+        {
+          filter: { query: { caption: caption } },
+          sort: {},
+          skip: 0,
+          limit: 1,
+        },
+        dbClient
+      )
+      .then((files) => {
+        // check duplicate filename (caption)
+        if (files.length > 0)
+          throw new AlreadyExistsError('File already exists');
+        return uploadImage(req, dbClient);
+        // caption matches
+      })
+      .then((newFile) => {
+        res.status(200).json({
+          success: true,
+          detail: newFile.item,
+        });
+      })
+      .catch((err) => {
+        if (err instanceof AlreadyExistsError) {
+          return res.status(409).json({
+            success: false,
+            message: 'File already exists',
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: err.message,
+          });
+        }
       });
-    }
-
-    const newFile = await uploadImage(req, res, collRef);
-
-    res.status(200).json({
-      success: true,
-      detail: newFile.ops,
-    });
   });
 
   // imageRouter.route('/get')
