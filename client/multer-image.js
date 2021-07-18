@@ -18,7 +18,9 @@ const uploadImageLabel = (req, fileUrl, dbClient) => {
     filename: `${req.file.filename}${path.extname(req.file.originalname)}`,
     fileId: fileUrl,
     fileSize: req.file.size,
-    lastModifiedDate: new Date(parseInt(req.body.mtime)),
+    fileLastModifiedDate: parseInt(req.body.mtime)
+      ? new Date(parseInt(req.body.mtime))
+      : new Date(),
   };
 
   return Storage.insert(
