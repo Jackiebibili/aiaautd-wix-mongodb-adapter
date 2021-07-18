@@ -4,6 +4,7 @@ node_modules/
 keys/
 temp/
 build.bat
+.env
 
 build
 npm-debug.log

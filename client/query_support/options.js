@@ -210,8 +210,8 @@ const sort_options = [
     priority: PRIORITY.MEDIUM,
   },
   {
-    optionKey: 'sortByLastActivityDate',
-    dbFieldName: 'lastActivityDate',
+    optionKey: 'sortByFileLastModifiedDate',
+    dbFieldName: 'fileLastModifiedDate',
     optionValues: [
       { s: 'ascending', number: 1 },
       { s: 'descending', number: -1 },
@@ -244,7 +244,7 @@ const filter_options = [
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByEventTime' },
-      { optionKey: 'sortByLastActivityDate' },
+      { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ],
     override_sort_options: [
@@ -258,7 +258,7 @@ const filter_options = [
     mutualExclusive: [
       { optionKey: 'sortByTextMatchScore' },
       { optionKey: 'sortByEventTime' },
-      { optionKey: 'sortByLastActivityDate' },
+      { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ], // exact match, no other collection sorting involved
     priority: PRIORITY.MEDIUM,
@@ -269,7 +269,7 @@ const filter_options = [
     mutualExclusive: [
       { optionKey: 'sortByTextMatchScore' },
       { optionKey: 'sortByEventTime' },
-      { optionKey: 'sortByLastActivityDate' },
+      { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ], // exact match, no other collection sorting involved
     priority: PRIORITY.MEDIUM,
@@ -284,7 +284,7 @@ const filter_options = [
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByEventTime' },
-      { optionKey: 'sortByLastActivityDate' },
+      { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ],
     override_sort_options: [
@@ -309,7 +309,7 @@ const filter_options = [
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByTextMatchScore' },
-      { optionKey: 'sortByLastActivityDate' },
+      { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ],
     priority: PRIORITY.MEDIUM,
@@ -321,7 +321,7 @@ const filter_options = [
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByTextMatchScore' },
-      { optionKey: 'sortByLastActivityDate' },
+      { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ],
     priority: PRIORITY.MEDIUM,
@@ -340,7 +340,7 @@ const filter_options = [
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByEventTime' },
-      { optionKey: 'sortByLastActivityDate' },
+      { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ],
     override_sort_options: [
@@ -356,7 +356,7 @@ const filter_options = [
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByCreatedDate' },
       { optionKey: 'sortByEventTime' },
-      { optionKey: 'sortByLastActivityDate' },
+      { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ],
     override_sort_options: [
