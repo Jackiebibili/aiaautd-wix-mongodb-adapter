@@ -1,7 +1,18 @@
 const GfsFiles = require('../service/gfsFiles');
+const NotFoundError = require('../model/error/not-found');
 
-exports.deleteOneFile = async (req, res, next, dbClient) => {
-  const deleteResult = await GfsFiles.deleteOneFile(req.body, dbClient);
-
-  res.status(200).json(deleteResult);
+exports.deleteOneFile = (req, res, next, dbClient) => {
+  GfsFiles.deleteOneFile(req, res, dbClient).catch((err) => {
+    if (err instanceof NotFoundError) {
+      return res.status(409).json({
+        success: false,
+        message: 'File not found',
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
+  });
 };

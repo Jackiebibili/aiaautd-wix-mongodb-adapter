@@ -1,10 +1,16 @@
-const gridfsBucket = require('../client/gridfsBucket');
-// const Storage = require('./storage');
+const aws = require('aws-sdk');
 const client = require('../client/mongodb');
-const NotFoundError = require('../model/error/not-found');
 const BadRequestError = require('../model/error/bad-request');
 
-exports.deleteOneFile = async (payload, dbClient) => {
+aws.config.setPromisesDependency();
+aws.config.update({
+  secretAccessKey: process.env.SECRET_ACCESS_KEY,
+  accessKeyId: process.env.ACCESS_KEY_ID,
+  region: process.env.REGION,
+});
+
+exports.deleteOneFile = (req, res, dbClient) => {
+  const payload = req.body;
   const { collectionName, itemId } = payload;
   const site_db_name = payload.requestContext.site_db_name;
   if (!collectionName)
@@ -13,14 +19,26 @@ exports.deleteOneFile = async (payload, dbClient) => {
   if (!site_db_name)
     throw new BadRequestError('Missing siteName in request body');
 
-  // remove file label
-  // get the file ID
-  const file = await client.delete(
-    site_db_name,
-    collectionName,
-    itemId,
-    dbClient
-  );
+  const s3 = new aws.S3();
+  return client
+    .delete(site_db_name, collectionName, itemId, dbClient)
+    .then((deleteFileLabel) => {
+      const param = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: deleteFileLabel.s3Key,
+      };
+      return Promise.all([
+        s3.deleteObject(param).promise(),
+        Promise.resolve(deleteFileLabel),
+      ]);
+    })
+    .then((data) => {
+      res.status(200).json({
+        item: data[1],
+      });
+    });
+
+  /*
   // remove the file from gridfs
   if (file.value) {
     await gridfsBucket.delete(site_db_name, file.value.fileId, dbClient);
@@ -32,5 +50,5 @@ exports.deleteOneFile = async (payload, dbClient) => {
     item: {
       ...file.value,
     },
-  };
+  }; */
 };
