@@ -140,8 +140,13 @@ exports.remove = async (payload, dbClient) => {
   if (!site_db_name)
     throw new BadRequestError('Missing siteName in request body');
 
-  const item = await client.get(site_db_name, collectionName, itemId, dbClient);
-  await client.delete(site_db_name, collectionName, itemId, dbClient);
+  // atomic action: findOneAndDelete
+  const item = await client.delete(
+    site_db_name,
+    collectionName,
+    itemId,
+    dbClient
+  );
 
   return { item: wrapDates(item) };
 };

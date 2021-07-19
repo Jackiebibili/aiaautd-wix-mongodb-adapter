@@ -38,15 +38,16 @@ exports.listCollectionIds = async (site_db_name, dbClient) => {
 };
 
 exports.delete = async (site_db_name, collectionName, itemId, dbClient) => {
-  try {
-    const mongo = await mongoUtil.getDb(site_db_name, dbClient);
-    return await mongo
-      .collection(collectionName)
-      .findOneAndDelete({ _id: itemId });
-  } catch (err) {
-    // delete not found
-    throw new NotFoundError('The deleted item is not found');
-  }
+  const mongo = await mongoUtil.getDb(site_db_name, dbClient);
+  return await mongo
+    .collection(collectionName)
+    .findOneAndDelete({ _id: itemId })
+    .then((oldDoc) => {
+      if (!oldDoc.value) {
+        throw new NotFoundError('The deleted item is not found');
+      }
+      return oldDoc.value;
+    });
 };
 
 exports.update = async (
