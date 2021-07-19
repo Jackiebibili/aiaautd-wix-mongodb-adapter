@@ -52,6 +52,7 @@ module.exports = (dbClient) => {
         if (req.file.size > MAX_FILE_SIZE) {
           throw new Error('File is too large. Please limit to 10MB');
         }
+        // upload image return to promise
         return uploadImage(req, dbClient);
         // caption matches
       })
