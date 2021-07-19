@@ -14,7 +14,6 @@ const mongoUtil = require('./client/mongoUtil');
 const { wrapError, errorMiddleware } = require('./utils/error');
 const authMiddleware = require('./utils/auth');
 const fileRouter = require('./client/image-route');
-const imageByIdRouter = require('./client/image-by-id-route');
 const app = express();
 const port = process.env.PORT || 8080;
 
@@ -32,7 +31,6 @@ let client;
     app.use(express.urlencoded({ extended: false }));
 
     // get images without authentication
-    app.use('/file', imageByIdRouter(client));
     app.use('/file', fileRouter(client));
 
     /* ignore direct access to the interface through GET */
