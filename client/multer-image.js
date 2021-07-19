@@ -7,7 +7,7 @@ const Storage = require('../service/storage');
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // contain label
-const uploadImageLabel = (req, fileUrl, dbClient) => {
+const uploadImageLabel = (req, s3Key, fileUrl, dbClient) => {
   const site_db_name = req.query.site_db_name;
   const caption = req.query.caption;
   const department = req.query.department;
@@ -17,6 +17,7 @@ const uploadImageLabel = (req, fileUrl, dbClient) => {
     department: [department],
     filename: `${req.file.filename}${path.extname(req.file.originalname)}`,
     fileId: fileUrl,
+    s3Key: s3Key,
     fileSize: req.file.size,
     fileLastModifiedDate: parseInt(req.body.mtime)
       ? new Date(parseInt(req.body.mtime))
@@ -42,12 +43,12 @@ const uploadImage = (req, dbClient) => {
   });
 
   const s3 = new aws.S3();
-
+  const s3Key = `file/${req.file.filename}-${req.file.originalname}`;
   const params = {
     ACL: process.env.ACCESS_LEVEL,
     Bucket: process.env.BUCKET_NAME,
     Body: fs.createReadStream(req.file.path),
-    Key: `file/${req.file.filename}-${req.file.originalname}`,
+    Key: s3Key,
   };
 
   // upload files to aws.s3
@@ -57,7 +58,7 @@ const uploadImage = (req, dbClient) => {
     .then((data) => {
       fs.unlinkSync(req.file.path); // Empty temp folder
       const locationUrl = data.Location; // file object public URL
-      return uploadImageLabel(req, locationUrl, dbClient);
+      return uploadImageLabel(req, s3Key, locationUrl, dbClient);
     });
 };
 
