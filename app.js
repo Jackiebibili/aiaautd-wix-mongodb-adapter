@@ -67,6 +67,7 @@ let client;
     app.post('/data/insert', wrapError(items.insertItem, client));
     app.post('/data/update', wrapError(items.updateItem, client));
     app.post('/data/remove', wrapError(items.removeItem, client));
+    app.post('/data/removeMany', wrapError(items.removeManyItems, client));
     app.post('/data/count', wrapError(items.countItems, client));
     app.post('/provision', wrapError(provision.provision, client));
 

@@ -30,6 +30,12 @@ exports.removeItem = async (req, res, next, dbClient) => {
   res.status(200).json(removeResult);
 };
 
+exports.removeManyItems = async (req, res, next, dbClient) => {
+  const removeResult = await Storage.removeMany(req.body, dbClient);
+
+  res.status(200).json(removeResult);
+};
+
 exports.countItems = async (req, res, next, dbClient) => {
   const countResult = await Storage.count(req, dbClient);
 
