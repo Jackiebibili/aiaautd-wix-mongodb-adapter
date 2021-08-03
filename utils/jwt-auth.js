@@ -1,15 +1,16 @@
 const jwt = require('jsonwebtoken');
-const CryptoJS = require('crypto-js');
 
-const expireHour = '2h';
-const randomSecretByteLength = 64;
+const expireHours = 2;
 
 function generateAccessToken(userId, secret) {
-  return jwt.sign(userId, secret, { expiresIn: expireHour });
+  // payload must be an object in order to have an expiry date
+  return jwt.sign({ id: userId }, secret, { expiresIn: `${expireHours}h` });
 }
 
-function getRandomSecretBytes() {
-  return CryptoJS.lib.WordArray.random(randomSecretByteLength).toString();
+function getExpireDate() {
+  const date = new Date();
+  date.setHours(date.getHours() + expireHours);
+  return date;
 }
 
-module.exports = { generateAccessToken, getRandomSecretBytes };
+module.exports = { generateAccessToken, getExpireDate };
