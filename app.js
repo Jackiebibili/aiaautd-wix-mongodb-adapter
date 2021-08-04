@@ -12,7 +12,8 @@ const pureBlogs = require('./controller/pureBlog');
 const files = require('./controller/files');
 const mongoUtil = require('./client/mongoUtil');
 const { wrapError, errorMiddleware } = require('./utils/error');
-const authMiddleware = require('./utils/auth');
+const userAccountAuth = require('./utils/auth-entry');
+const userAccountRegister = require('./utils/sign-up/register-entry');
 const fileRouter = require('./client/image-route');
 const app = express();
 const port = process.env.PORT || 8080;
@@ -30,7 +31,7 @@ let client;
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
 
-    // get images without authentication
+    // upload images without authentication
     app.use('/file', fileRouter(client));
 
     /* ignore direct access to the interface through GET */
@@ -41,8 +42,21 @@ let client;
     });
     /// //////////////////////////////////////////////////////
 
-    // secretKey authentication
-    app.use(authMiddleware(client));
+    // user sign-up
+    app.post(
+      '/sign-up/newAccount',
+      wrapError(userAccountRegister.registerUser, client)
+    );
+
+    // user authentication
+    app.post(
+      '/auth/random',
+      wrapError(userAccountAuth.getRandomNonceAndSalt, client)
+    );
+    app.post(
+      '/auth/login',
+      wrapError(userAccountAuth.authenticateUser, client)
+    );
 
     // routes for gridfs operations (e.g. delete)
     app.post('/file/delete', wrapError(files.deleteOneFile, client));
@@ -67,6 +81,7 @@ let client;
     app.post('/data/insert', wrapError(items.insertItem, client));
     app.post('/data/update', wrapError(items.updateItem, client));
     app.post('/data/remove', wrapError(items.removeItem, client));
+    app.post('/data/removeMany', wrapError(items.removeManyItems, client));
     app.post('/data/count', wrapError(items.countItems, client));
     app.post('/provision', wrapError(provision.provision, client));
 

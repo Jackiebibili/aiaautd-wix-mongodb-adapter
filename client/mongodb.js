@@ -50,6 +50,19 @@ exports.delete = async (site_db_name, collectionName, itemId, dbClient) => {
     });
 };
 
+exports.deleteMany = async (site_db_name, collectionName, query, dbClient) => {
+  const mongo = await mongoUtil.getDb(site_db_name, dbClient);
+  return await mongo
+    .collection(collectionName)
+    .deleteMany(query)
+    .then((res) => {
+      if (res.deletedCount === 0) {
+        throw new NotFoundError('The deleted items are not found');
+      }
+      return { deletedCount: res.deletedCount };
+    });
+};
+
 exports.update = async (
   site_db_name,
   collectionName,
