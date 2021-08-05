@@ -12,6 +12,7 @@ const pureBlogs = require('./controller/pureBlog');
 const files = require('./controller/files');
 const mongoUtil = require('./client/mongoUtil');
 const { wrapError, errorMiddleware } = require('./utils/error');
+const tokenVerify = require('./utils/verify/verify-entry');
 const userAccountAuth = require('./utils/auth-entry');
 const userAccountRegister = require('./utils/sign-up/register-entry');
 const fileRouter = require('./client/image-route');
@@ -30,9 +31,6 @@ let client;
     // parse request's json body
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
-
-    // upload images without authentication
-    app.use('/file', fileRouter(client));
 
     /* ignore direct access to the interface through GET */
     /// //////////////////////////////////////////////////////
@@ -57,6 +55,12 @@ let client;
       '/auth/login',
       wrapError(userAccountAuth.authenticateUser, client)
     );
+
+    // token authentication
+    app.use(wrapError(tokenVerify.authenticateUserToken, client));
+
+    // upload images without authentication
+    app.use('/file', fileRouter(client));
 
     // routes for gridfs operations (e.g. delete)
     app.post('/file/delete', wrapError(files.deleteOneFile, client));

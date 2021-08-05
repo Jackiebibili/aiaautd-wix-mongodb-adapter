@@ -1,4 +1,6 @@
 const CryptoJS = require('crypto-js');
+const client = require('../client/mongodb');
+const DB_CONFIG = require('../constants/config');
 
 function getRandomBytesWithLength(byteLength = 64) {
   return CryptoJS.lib.WordArray.random(byteLength).toString();
@@ -19,4 +21,18 @@ function getPasswordHash(salt, plainPw) {
   return sha256.finalize().toString();
 }
 
-module.exports = { getRandomBytesWithLength, getNonceHash, getPasswordHash };
+function getUserInfoById(id, dbClient) {
+  return client.get(
+    DB_CONFIG.DATABASE_NAME.USER,
+    DB_CONFIG.COLLECTION_NAME.USER.USER_ACCOUNT,
+    id,
+    dbClient
+  );
+}
+
+module.exports = {
+  getRandomBytesWithLength,
+  getNonceHash,
+  getPasswordHash,
+  getUserInfoById,
+};

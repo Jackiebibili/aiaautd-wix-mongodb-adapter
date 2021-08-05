@@ -4,14 +4,10 @@ const Storage = require('../service/storage');
 const client = require('../client/mongodb');
 const jwt = require('../utils/jwt-auth');
 const authUtil = require('../utils/auth-util');
-
+const DB_CONFIG = require('../constants/config');
 const randomSecretByteLength = 64;
 const serverNonceByteLength = 128;
 
-const siteName = 'user-credentials';
-const accountCollectionName = 'userAccount';
-const nonceCollectionName = 'temp_nonce';
-const tokenCollectionName = 'token';
 const passwordSaltColumn = 'passwordSalt';
 
 const issueToken = (accountId, dbClient) => {
@@ -24,8 +20,8 @@ const issueToken = (accountId, dbClient) => {
 
     return Storage.insert(
       {
-        site_db_name: siteName,
-        collectionName: tokenCollectionName,
+        site_db_name: DB_CONFIG.DATABASE_NAME.USER,
+        collectionName: DB_CONFIG.COLLECTION_NAME.USER.TOKEN,
         item: { secret: randBytes, token: base64Token, expiryDate: date },
       },
       dbClient
@@ -42,8 +38,8 @@ const issueToken = (accountId, dbClient) => {
 const isUserAccountExist = (username, dbClient) => {
   return client
     .query(
-      siteName,
-      accountCollectionName,
+      DB_CONFIG.DATABASE_NAME.USER,
+      DB_CONFIG.COLLECTION_NAME.USER.USER_ACCOUNT,
       {
         skip: 0,
         limit: 1,
@@ -63,7 +59,12 @@ const isUserAccountExist = (username, dbClient) => {
 
 const deleteAllOldServerNonce = (username, dbClient) => {
   return client
-    .deleteMany(siteName, nonceCollectionName, { username }, dbClient)
+    .deleteMany(
+      DB_CONFIG.DATABASE_NAME.USER,
+      DB_CONFIG.COLLECTION_NAME.USER.NONCE,
+      { username },
+      dbClient
+    )
     .catch((err) => {
       if (!(err instanceof NotFoundError)) {
         throw err;
@@ -91,8 +92,8 @@ const getServerNonceAndSalt = (username, dbClient) => {
       // save the temporary server nonce with username
       return Storage.insert(
         {
-          site_db_name: siteName,
-          collectionName: nonceCollectionName,
+          site_db_name: DB_CONFIG.DATABASE_NAME.USER,
+          collectionName: DB_CONFIG.COLLECTION_NAME.USER.NONCE,
           item: { username, nonce: nonceHexStr },
         },
         dbClient
@@ -125,8 +126,8 @@ const authenticate = (req, dbClient) => {
         password: res.password,
       }),
       client.query(
-        siteName,
-        nonceCollectionName,
+        DB_CONFIG.DATABASE_NAME.USER,
+        DB_CONFIG.COLLECTION_NAME.USER.NONCE,
         {
           skip: 0,
           limit: 1,
@@ -163,7 +164,5 @@ module.exports = {
   issueToken,
   authenticate,
   getServerNonceAndSalt,
-  siteName,
-  accountCollectionName,
   passwordSaltColumn,
 };
