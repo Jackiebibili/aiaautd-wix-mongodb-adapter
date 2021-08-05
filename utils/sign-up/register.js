@@ -1,6 +1,6 @@
 const client = require('../../client/mongodb');
 const Storage = require('../../service/storage');
-const { passwordSaltColumn } = require('../auth-middleware');
+const { passwordSaltColumn } = require('../login/auth');
 const authUtil = require('../auth-util');
 const DB_CONFIG = require('../../constants/config');
 const BadRequestError = require('../../model/error/bad-request');
