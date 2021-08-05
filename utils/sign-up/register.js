@@ -1,11 +1,8 @@
 const client = require('../../client/mongodb');
 const Storage = require('../../service/storage');
-const {
-  siteName,
-  accountCollectionName,
-  passwordSaltColumn,
-} = require('../auth-middleware');
+const { passwordSaltColumn } = require('../auth-middleware');
 const authUtil = require('../auth-util');
+const DB_CONFIG = require('../../constants/config');
 const BadRequestError = require('../../model/error/bad-request');
 const AlreadyExistsError = require('../../model/error/already-exists');
 
@@ -33,8 +30,8 @@ const getNewUser = (req, dbClient) => {
   const username = req.body[userFieldName.USERNAME];
   return client
     .query(
-      siteName,
-      accountCollectionName,
+      DB_CONFIG.DATABASE_NAME.USER,
+      DB_CONFIG.COLLECTION_NAME.USER.USER_ACCOUNT,
       {
         skip: 0,
         limit: 1,
@@ -84,8 +81,8 @@ const saveNewUser = (newUser, dbClient) => {
   // save the new user to DB
   return Storage.insert(
     {
-      site_db_name: siteName,
-      collectionName: accountCollectionName,
+      site_db_name: DB_CONFIG.DATABASE_NAME.USER,
+      collectionName: DB_CONFIG.COLLECTION_NAME.USER.USER_ACCOUNT,
       item: user,
     },
     dbClient
