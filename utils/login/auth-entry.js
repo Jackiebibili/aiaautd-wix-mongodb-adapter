@@ -1,5 +1,5 @@
-const BadRequestError = require('../model/error/bad-request');
-const auth = require('./auth-middleware');
+const BadRequestError = require('../../model/error/bad-request');
+const auth = require('./auth');
 
 const getRandomNonceAndSalt = async (req, res, next, dbClient) => {
   const username = req.body.username;
@@ -11,9 +11,9 @@ const getRandomNonceAndSalt = async (req, res, next, dbClient) => {
 };
 
 const authenticateUser = async (req, res, next, dbClient) => {
-  const accountId = await auth.authenticate(req, dbClient);
+  const { accountId, username } = await auth.authenticate(req, dbClient);
 
-  const token = await auth.issueToken(accountId, dbClient);
+  const token = await auth.issueToken(accountId, username, dbClient);
   res.status(200).json({ token });
 };
 

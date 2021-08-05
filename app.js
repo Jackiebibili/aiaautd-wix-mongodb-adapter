@@ -13,7 +13,8 @@ const files = require('./controller/files');
 const mongoUtil = require('./client/mongoUtil');
 const { wrapError, errorMiddleware } = require('./utils/error');
 const tokenVerify = require('./utils/verify/verify-entry');
-const userAccountAuth = require('./utils/auth-entry');
+const logout = require('./utils/logout/logout-entry');
+const userAccountAuth = require('./utils/login/auth-entry');
 const userAccountRegister = require('./utils/sign-up/register-entry');
 const fileRouter = require('./client/image-route');
 const app = express();
@@ -55,6 +56,7 @@ let client;
       '/auth/login',
       wrapError(userAccountAuth.authenticateUser, client)
     );
+    app.post('/auth/logout', wrapError(logout.logoutUser, client));
 
     // token authentication
     app.use(wrapError(tokenVerify.authenticateUserToken, client));

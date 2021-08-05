@@ -1,32 +1,49 @@
-const NotFoundError = require('../model/error/not-found');
-const BadCredentials = require('../model/error/bad-credentials');
-const Storage = require('../service/storage');
-const client = require('../client/mongodb');
-const jwt = require('../utils/jwt-auth');
-const authUtil = require('../utils/auth-util');
-const DB_CONFIG = require('../constants/config');
+const NotFoundError = require('../../model/error/not-found');
+const BadCredentials = require('../../model/error/bad-credentials');
+const Storage = require('../../service/storage');
+const client = require('../../client/mongodb');
+const jwt = require('../jwt-auth');
+const authUtil = require('../auth-util');
+const DB_CONFIG = require('../../constants/config');
+
 const randomSecretByteLength = 64;
 const serverNonceByteLength = 128;
-
 const passwordSaltColumn = 'passwordSalt';
 
-const issueToken = (accountId, dbClient) => {
-  return ((id) => {
-    // Initiziate a Token and store in database
-    const date = jwt.getExpireDate();
-    const randBytes = authUtil.getRandomBytesWithLength(randomSecretByteLength);
-    const token = jwt.generateAccessToken(id, randBytes);
-    const base64Token = Buffer.from(token).toString('base64');
+const deleteAllOldToken = (username, dbClient) =>
+  client.deleteMany(
+    DB_CONFIG.DATABASE_NAME.USER,
+    DB_CONFIG.COLLECTION_NAME.USER.TOKEN,
+    { username },
+    dbClient,
+    true
+  );
 
-    return Storage.insert(
-      {
-        site_db_name: DB_CONFIG.DATABASE_NAME.USER,
-        collectionName: DB_CONFIG.COLLECTION_NAME.USER.TOKEN,
-        item: { secret: randBytes, token: base64Token, expiryDate: date },
-      },
-      dbClient
-    );
-  })(accountId)
+const issueToken = (accountId, username, dbClient) => {
+  return deleteAllOldToken(username, dbClient)
+    .then(() => {
+      // Initiziate a Token and store in database
+      const date = jwt.getExpireDate();
+      const randBytes = authUtil.getRandomBytesWithLength(
+        randomSecretByteLength
+      );
+      const token = jwt.generateAccessToken(accountId, randBytes);
+      const base64Token = Buffer.from(token).toString('base64');
+
+      return Storage.insert(
+        {
+          site_db_name: DB_CONFIG.DATABASE_NAME.USER,
+          collectionName: DB_CONFIG.COLLECTION_NAME.USER.TOKEN,
+          item: {
+            secret: randBytes,
+            token: base64Token,
+            username,
+            expiryDate: date,
+          },
+        },
+        dbClient
+      );
+    })
     .then((data) => {
       return { token: data.item.token };
     })
@@ -58,19 +75,13 @@ const isUserAccountExist = (username, dbClient) => {
 };
 
 const deleteAllOldServerNonce = (username, dbClient) => {
-  return client
-    .deleteMany(
-      DB_CONFIG.DATABASE_NAME.USER,
-      DB_CONFIG.COLLECTION_NAME.USER.NONCE,
-      { username },
-      dbClient
-    )
-    .catch((err) => {
-      if (!(err instanceof NotFoundError)) {
-        throw err;
-      }
-      return true;
-    });
+  return client.deleteMany(
+    DB_CONFIG.DATABASE_NAME.USER,
+    DB_CONFIG.COLLECTION_NAME.USER.NONCE,
+    { username },
+    dbClient,
+    true
+  );
 };
 
 const getServerNonceAndSalt = (username, dbClient) => {
@@ -79,7 +90,7 @@ const getServerNonceAndSalt = (username, dbClient) => {
       // delete all server nonce
       return Promise.all([
         Promise.resolve(res[passwordSaltColumn]),
-        deleteAllOldServerNonce(username, dbClient),
+        // deleteAllOldServerNonce(username, dbClient),
       ]);
     })
     .then((res) => {
@@ -132,7 +143,7 @@ const authenticate = (req, dbClient) => {
           skip: 0,
           limit: 1,
           filter: { query: { username } },
-          sort: {},
+          sort: { sort: { lastModifiedDate: -1 } }, // get the most recent nonce
         },
         dbClient
       ),
@@ -155,7 +166,7 @@ const authenticate = (req, dbClient) => {
       }
       // delete all old nonce
       deleteAllOldServerNonce(username, dbClient);
-      return account.accountId;
+      return { accountId: account.accountId, username };
     });
   });
 };
@@ -164,5 +175,6 @@ module.exports = {
   issueToken,
   authenticate,
   getServerNonceAndSalt,
+  deleteAllOldToken,
   passwordSaltColumn,
 };
