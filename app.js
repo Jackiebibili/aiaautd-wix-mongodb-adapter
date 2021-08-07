@@ -29,7 +29,7 @@ let client;
     client = await mongoUtil.getClient();
     console.log('===MongoDB connected===');
 
-    app.use(cors({ credentials: true, origin: 'http://localhost:4200' }));
+    app.use(cors({ credentials: true, origin: 'http://3.142.156.127:8096' }));
     // parse request's json body
     app.use(express.json());
     app.use(cookieParser());
