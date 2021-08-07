@@ -29,6 +29,7 @@
   "dependencies": {
     "aws-sdk": "^2.948.0",
     "bl": "^4.0.3",
+    "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "crypto-js": "^4.1.1",
     "dotenv": "^8.6.0",

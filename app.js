@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 // enviroment variable register
 require('dotenv').config();
 const path = require('path');
@@ -28,9 +29,10 @@ let client;
     client = await mongoUtil.getClient();
     console.log('===MongoDB connected===');
 
-    app.use(cors());
+    app.use(cors({ credentials: true, origin: 'http://localhost:4200' }));
     // parse request's json body
     app.use(express.json());
+    app.use(cookieParser());
     app.use(express.urlencoded({ extended: false }));
 
     /* ignore direct access to the interface through GET */
@@ -60,6 +62,9 @@ let client;
 
     // token authentication
     app.use(wrapError(tokenVerify.authenticateUserToken, client));
+
+    // dummy auth end point -- do nothing
+    app.post('/wall', (_, res) => res.status(200).send(''));
 
     // upload images without authentication
     app.use('/file', fileRouter(client));

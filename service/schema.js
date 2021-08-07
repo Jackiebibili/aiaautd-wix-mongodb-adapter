@@ -1,4 +1,5 @@
 const client = require('../client/mongodb');
+const DB_CONFIG = require('../constants/config');
 
 exports.find = async (payload, dbClient) => {
   const { schemaIds } = payload;
@@ -8,7 +9,7 @@ exports.find = async (payload, dbClient) => {
   return {
     schemas: [
       await client.describeDoc(
-        payload.requestContext.site_db_name,
+        DB_CONFIG.DATABASE_NAME.MAIN,
         schemaIds[0],
         dbClient
       ),
@@ -17,7 +18,7 @@ exports.find = async (payload, dbClient) => {
 };
 
 exports.list = async (payload, dbClient) => {
-  const site_db_name = payload.requestContext.site_db_name;
+  const site_db_name = DB_CONFIG.DATABASE_NAME.MAIN;
   const schemasIds = await client.listCollectionIds(site_db_name, dbClient);
 
   const schemas = schemasIds
@@ -38,8 +39,5 @@ exports.list = async (payload, dbClient) => {
 };
 
 exports.provision = async (payload, dbClient) => {
-  return client.listCollectionIds(
-    payload.requestContext.site_db_name,
-    dbClient
-  );
+  return client.listCollectionIds(DB_CONFIG.DATABASE_NAME.MAIN, dbClient);
 };
