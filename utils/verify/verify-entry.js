@@ -7,7 +7,7 @@ const tokenHeaderName = process.env.TOKEN_HEADER_NAME;
  * Authentication middleware
  */
 const authenticateUserToken = async (req, res, next, dbClient) => {
-  const token = req.headers[tokenHeaderName];
+  const token = req.cookies[tokenHeaderName];
   if (!token) {
     throw new BadRequestError();
   }
