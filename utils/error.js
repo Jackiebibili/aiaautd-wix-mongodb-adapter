@@ -20,6 +20,7 @@ exports.errorMiddleware = (err, req, res, next) => {
       break;
     case BadCredentialsError.name:
       res.status(401).send({ message: err.message });
+      break;
     case AlreadyExistsError.name:
       res.status(409).send({ message: err.message });
       break;
