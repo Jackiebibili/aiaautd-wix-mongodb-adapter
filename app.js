@@ -3,6 +3,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 // enviroment variable register
 require('dotenv').config();
+const { corsOptions } = require('./constants/cors-config');
 const path = require('path');
 // const bodyParser = require('body-parser');
 const items = require('./controller/items');
@@ -29,7 +30,7 @@ let client;
     client = await mongoUtil.getClient();
     console.log('===MongoDB connected===');
 
-    app.use(cors({ credentials: true, origin: 'http://localhost:4200' }));
+    app.use(cors(corsOptions));
     // parse request's json body
     app.use(express.json());
     app.use(cookieParser());

@@ -1,11 +1,11 @@
 const { userLogout } = require('./logout');
 const tokenHeaderName = process.env.TOKEN_HEADER_NAME;
-const BadRequestError = require('../../model/error/bad-request');
+const BadCredentialsError = require('../../model/error/bad-credentials');
 
 const logoutUser = async (req, res, next, dbClient) => {
   const token = req.cookies[tokenHeaderName];
   if (!token) {
-    throw new BadRequestError();
+    throw new BadCredentialsError();
   }
 
   await userLogout(token, dbClient);
