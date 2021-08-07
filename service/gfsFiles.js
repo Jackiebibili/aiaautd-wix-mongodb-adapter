@@ -1,5 +1,6 @@
 const aws = require('aws-sdk');
 const client = require('../client/mongodb');
+const DB_CONFIG = require('../constants/config');
 const BadRequestError = require('../model/error/bad-request');
 
 aws.config.setPromisesDependency();
@@ -12,7 +13,7 @@ aws.config.update({
 exports.deleteOneFile = (req, res, dbClient) => {
   const payload = req.body;
   const { collectionName, itemId } = payload;
-  const site_db_name = payload.requestContext.site_db_name;
+  const site_db_name = DB_CONFIG.DATABASE_NAME.MAIN;
   if (!collectionName)
     throw new BadRequestError('Missing collectionName in request body');
   if (!itemId) throw new BadRequestError('Missing itemId in request body');

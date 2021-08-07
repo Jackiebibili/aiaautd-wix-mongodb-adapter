@@ -2,6 +2,7 @@ const BadRequestError = require('../model/error/bad-request');
 const AlreadyExistsError = require('../model/error/already-exists');
 const NotFoundError = require('../model/error/not-found');
 const UnauthorizedError = require('../model/error/unauthorized');
+const BadCredentialsError = require('../model/error/bad-credentials');
 
 /**
  * A helper that allows passing errors from async/await functions
@@ -17,6 +18,8 @@ exports.errorMiddleware = (err, req, res, next) => {
     case BadRequestError.name:
       res.status(400).send({ message: err.message });
       break;
+    case BadCredentialsError.name:
+      res.status(401).send({ message: err.message });
     case AlreadyExistsError.name:
       res.status(409).send({ message: err.message });
       break;

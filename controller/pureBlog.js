@@ -1,6 +1,7 @@
 const uuid = require('uuid').v4;
 const Storage = require('../service/storage');
 const truncatedPureBlogCollection = 'truncated-pure-blog';
+const DB_CONFIG = require('../constants/config');
 
 const getPlainText = (delta) => {
   return delta
@@ -18,7 +19,7 @@ const updateTruncatedPureBlog = async (req, dbClient) => {
   const id = payload.item._id;
   const res = await Storage.get(
     {
-      site_db_name: payload.requestContext.site_db_name,
+      site_db_name: DB_CONFIG.DATABASE_NAME.MAIN,
       collectionName: payload.collectionName,
       itemId: id,
     },
@@ -31,7 +32,7 @@ const updateTruncatedPureBlog = async (req, dbClient) => {
   // update the truncated content
   return Storage.update(
     {
-      site_db_name: payload.requestContext.site_db_name,
+      site_db_name: DB_CONFIG.DATABASE_NAME.MAIN,
       collectionName: truncatedPureBlogCollection,
       item: { _id: previewId, title, text: plainText },
     },

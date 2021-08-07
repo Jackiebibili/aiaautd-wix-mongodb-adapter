@@ -5,13 +5,14 @@ const { getFilters } = require('../client/query_support/filter-parser');
 const { getSort } = require('../client/query_support/sort-parser');
 const QueryParamsAggregateUndirectedGraph = require('../client/query_support/query-params-relation');
 const { commonFields } = require('../constants/commonDataSchema');
+const DB_CONFIG = require('../constants/config');
 const mutuallyExclusiveTestObject = new QueryParamsAggregateUndirectedGraph();
 
 exports.find = async (req, dbClient) => {
   const payload = req.body;
   const collectionName = payload.collectionName;
   const query = req.query;
-  const site_db_name = payload.requestContext.site_db_name;
+  const site_db_name = DB_CONFIG.DATABASE_NAME.MAIN;
   const skip = query.skip;
   const limit = query.limit;
 
@@ -61,7 +62,7 @@ exports.find = async (req, dbClient) => {
 
 exports.get = async (payload, dbClient) => {
   let { site_db_name, collectionName, itemId } = payload;
-  site_db_name = site_db_name || payload.requestContext.site_db_name;
+  site_db_name = site_db_name || DB_CONFIG.DATABASE_NAME.MAIN;
   if (!collectionName)
     throw new BadRequestError('Missing collectionName in request body');
   if (!itemId) throw new BadRequestError('Missing itemId in request body');
@@ -89,7 +90,7 @@ exports.get = async (payload, dbClient) => {
 
 exports.insert = async (payload, dbClient) => {
   let { site_db_name, collectionName, item } = payload;
-  site_db_name = site_db_name || payload.requestContext.site_db_name;
+  site_db_name = site_db_name || DB_CONFIG.DATABASE_NAME.MAIN;
   if (!collectionName)
     throw new BadRequestError('Missing collectionName in request body');
   if (!item) throw new BadRequestError('Missing item in request body');
@@ -114,7 +115,7 @@ exports.insert = async (payload, dbClient) => {
 
 exports.update = async (payload, dbClient) => {
   let { site_db_name, collectionName, item } = payload;
-  site_db_name = site_db_name || payload.requestContext.site_db_name;
+  site_db_name = site_db_name || DB_CONFIG.DATABASE_NAME.MAIN;
   if (!collectionName)
     throw new BadRequestError('Missing collectionName in request body');
   if (!item) throw new BadRequestError('Missing item in request body');
@@ -133,7 +134,7 @@ exports.update = async (payload, dbClient) => {
 
 exports.remove = async (payload, dbClient) => {
   const { collectionName, itemId } = payload;
-  const site_db_name = payload.requestContext.site_db_name;
+  const site_db_name = DB_CONFIG.DATABASE_NAME.MAIN;
   if (!collectionName)
     throw new BadRequestError('Missing collectionName in request body');
   if (!itemId) throw new BadRequestError('Missing itemId in request body');
@@ -151,11 +152,34 @@ exports.remove = async (payload, dbClient) => {
   return { item: wrapDates(item) };
 };
 
+exports.removeMany = async (payload, dbClient) => {
+  const { collectionName, query } = payload;
+  const site_db_name = DB_CONFIG.DATABASE_NAME.MAIN;
+  if (!collectionName)
+    throw new BadRequestError('Missing collectionName in request body');
+  if (!query || Object.values(query).length === 0) {
+    // prevent delete all docs
+    throw new BadRequestError('Query parameter is invalid');
+  }
+  if (!site_db_name)
+    throw new BadRequestError('Missing siteName in request body');
+
+  // atomic action: deleteMany
+  const items = await client.deleteMany(
+    site_db_name,
+    collectionName,
+    query,
+    dbClient
+  );
+
+  return { items: wrapDates(items) };
+};
+
 exports.count = async (req, dbClient) => {
   const payload = req.body;
   const { collectionName } = payload;
   const query = req.query;
-  const site_db_name = payload.requestContext.site_db_name;
+  const site_db_name = DB_CONFIG.DATABASE_NAME.MAIN;
 
   if (!collectionName)
     throw new BadRequestError('Missing collectionName in request body');
