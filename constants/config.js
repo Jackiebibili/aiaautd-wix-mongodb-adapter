@@ -9,5 +9,8 @@ module.exports = {
       TOKEN: 'token',
       USER_ACCOUNT: 'userAccount',
     },
+    MAIN: {
+      OFFICER: 'officers',
+    },
   },
 };
