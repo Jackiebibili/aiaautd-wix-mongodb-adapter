@@ -80,6 +80,7 @@ const saveNewUser = (newUser, dbClient) => {
   const userId = uuid();
 
   const user = {
+    ...newUser,
     _id: userId,
     [userFieldName.USERNAME]: newUser[userFieldName.USERNAME],
     [userFieldName.PASSWORD]: pwHash,
