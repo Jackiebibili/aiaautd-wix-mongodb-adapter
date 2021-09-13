@@ -44,10 +44,10 @@ exports.find = async (req, dbClient) => {
   ]);
 
   const enhanced = results.map((doc) => {
-    return wrapDates({
+    return {
       _id: doc.id,
       ...doc,
-    });
+    };
   });
 
   return {
@@ -65,7 +65,11 @@ exports.get = async (payload, dbClient) => {
   site_db_name = site_db_name || DB_CONFIG.DATABASE_NAME.MAIN;
   if (!collectionName)
     throw new BadRequestError('Missing collectionName in request body');
-  if (!itemId) throw new BadRequestError('Missing itemId in request body');
+  if (itemId === '') {
+    return { item: {} };
+  } else if (!itemId) {
+    throw new BadRequestError('Missing itemId in request body');
+  }
   if (!site_db_name)
     throw new BadRequestError('Missing siteName in request body');
 
@@ -81,10 +85,10 @@ exports.get = async (payload, dbClient) => {
   }
 
   return {
-    item: wrapDates({
+    item: {
       _id: document.id,
       ...document,
-    }),
+    },
   };
 };
 
@@ -110,7 +114,7 @@ exports.insert = async (payload, dbClient) => {
     dbClient
   );
 
-  return { item: wrapDates(item) };
+  return { item };
 };
 
 exports.update = async (payload, dbClient) => {
@@ -129,7 +133,7 @@ exports.update = async (payload, dbClient) => {
     dbClient
   );
 
-  return { item: wrapDates(res.ops) };
+  return { item: res.ops };
 };
 
 exports.remove = async (payload, dbClient) => {
@@ -149,7 +153,7 @@ exports.remove = async (payload, dbClient) => {
     dbClient
   );
 
-  return { item: wrapDates(item) };
+  return { item };
 };
 
 exports.removeMany = async (payload, dbClient) => {
@@ -172,7 +176,7 @@ exports.removeMany = async (payload, dbClient) => {
     dbClient
   );
 
-  return { items: wrapDates(items) };
+  return { items };
 };
 
 exports.count = async (req, dbClient) => {
@@ -222,14 +226,14 @@ const extractDates = (item) => {
   return item;
 };
 
-const wrapDates = (item) => {
-  // eslint-disable-next-line array-callback-return
-  Object.keys(item).map((key) => {
-    const value = item[key];
-    if (value instanceof Date) {
-      item[key] = { $date: item[key].toString() };
-    }
-  });
+// const wrapDates = (item) => {
+//   // eslint-disable-next-line array-callback-return
+//   Object.keys(item).map((key) => {
+//     const value = item[key];
+//     if (value instanceof Date) {
+//       item[key] = { $date: item[key].toString() };
+//     }
+//   });
 
-  return item;
-};
+//   return item;
+// };
