@@ -1,106 +1,136 @@
 const Storage = require('../service/storage');
+const CONFIG = require('../constants/config');
 
-exports.getBlogEntry = async (req, res, next, dbClient) => {
-  const getBlog = await Storage.get(req.body, dbClient);
-  const { fullFiles, fullLeads } = getBlogFullPromises(req, dbClient, [
-    getBlog.item,
-  ]);
+const fullEventForeignKeys = [
+  {
+    name: 'files',
+    type: 'ARRAY',
+    property: ['fileId'],
+    collectionName: CONFIG.COLLECTION_NAME.MAIN.FILE,
+  },
+  {
+    name: 'leads',
+    type: 'ARRAY',
+    property: ['leadId'],
+    collectionName: CONFIG.COLLECTION_NAME.MAIN.OFFICER,
+  },
+  {
+    name: 'pureBlogId',
+    type: 'STRING',
+    property: [],
+    collectionName: CONFIG.COLLECTION_NAME.MAIN.PURE_BLOG,
+  },
+];
 
-  const [files, leads] = await Promise.all([
-    Promise.all(fullFiles),
-    Promise.all(fullLeads),
-  ]);
-  getBlog.item = [getBlog.item].map((item, idx) => {
-    return { ...item, files: files[idx], leads: leads[idx] };
-  })[0];
+const truncatedEventForeignKeys = [
+  {
+    name: 'files',
+    type: 'ARRAY',
+    property: ['fileId'],
+    collectionName: CONFIG.COLLECTION_NAME.MAIN.FILE,
+  },
+  {
+    name: 'leads',
+    type: 'ARRAY',
+    property: ['leadId'],
+    collectionName: CONFIG.COLLECTION_NAME.MAIN.OFFICER,
+  },
+  {
+    name: 'pureBlogPreviewId',
+    type: 'STRING',
+    property: [],
+    collectionName: CONFIG.COLLECTION_NAME.MAIN.TRUNCATED_PURE_BLOG,
+  },
+];
 
-  // return json response
-  res.status(200).json(getBlog);
+const getValueFromObjNestedProperty = (obj, propertyList = []) => {
+  if (propertyList.length === 0) {
+    return obj;
+  }
+  if (obj === undefined) {
+    throw new Error('cannot get property of undefined');
+  }
+  return getValueFromObjNestedProperty(
+    obj[propertyList[0]],
+    propertyList.slice(1)
+  );
 };
 
-exports.findBlogEntry = async (req, res, next, dbClient) => {
-  const getBlog = await Storage.find(req, dbClient);
-  if (!getBlog.items) {
-    // no items - return an empty array
-    res.status(200).json(getBlog);
+const getDocumentsFromForeignKeys = (obj, objFormatEntry, dbClient) => {
+  const item = obj[objFormatEntry.name];
+  if (objFormatEntry.type === 'ARRAY') {
+    return Promise.all(
+      item.map((entry) =>
+        Storage.get(
+          {
+            collectionName: objFormatEntry.collectionName,
+            itemId: getValueFromObjNestedProperty(
+              entry,
+              objFormatEntry.property
+            ),
+          },
+          dbClient
+        ).then((data) => data.item)
+      )
+    );
   }
-  const { fullFiles, fullLeads } = getBlogFullPromises(
-    req,
-    dbClient,
-    getBlog.items
-  );
-  // const files = await Promise.all(fullFiles);
-  // const leads = await Promise.all(fullLeads);
-  const [files, leads] = await Promise.all([
-    Promise.all(fullFiles),
-    Promise.all(fullLeads),
-  ]);
-  getBlog.items = getBlog.items.map((item, idx) => {
-    return { ...item, files: files[idx], leads: leads[idx] };
-  });
+  // single flatten value
+  return Storage.get(
+    {
+      collectionName: objFormatEntry.collectionName,
+      itemId: item,
+    },
+    dbClient
+  ).then((data) => data.item);
+};
 
-  // return json response
-  res.status(200).json(getBlog);
+const formatEventData = (formatKeys, dbClient) => (eventList) => {
+  return Promise.all(
+    eventList.items.map((item) => {
+      return Promise.all(
+        formatKeys.map((insertedDocFormat) =>
+          getDocumentsFromForeignKeys(item, insertedDocFormat, dbClient)
+        )
+      ).then((insertedList) => {
+        const insertedObj = insertedList.reduce((obj, value, idx) => {
+          return { ...obj, [formatKeys[idx].name]: value };
+        }, {});
+        return { ...item, ...insertedObj };
+      });
+    })
+  );
+};
+
+exports.getBlogEntry = async (req, res, next, dbClient) => {
+  Storage.get(
+    { ...req, body: { collectionName: CONFIG.COLLECTION_NAME.MAIN.EVENT } },
+    dbClient
+  )
+    .then((event) =>
+      formatEventData(fullEventForeignKeys, dbClient)({ items: [event.item] })
+    )
+    .then((data) => res.status(200).json(data));
+};
+
+exports.findBlogEntry = (req, res, next, dbClient) => {
+  Storage.find(
+    { ...req, body: { collectionName: CONFIG.COLLECTION_NAME.MAIN.EVENT } },
+    dbClient
+  )
+    .then(formatEventData(truncatedEventForeignKeys, dbClient))
+    .then((data) => res.status(200).json(data));
+};
+
+exports.findFullBlogEntry = async (req, res, next, dbClient) => {
+  Storage.find(
+    { ...req, body: { collectionName: CONFIG.COLLECTION_NAME.MAIN.EVENT } },
+    dbClient
+  )
+    .then(formatEventData(fullEventForeignKeys, dbClient))
+    .then((data) => res.status(200).json(data));
 };
 
 exports.updateBlogEntry = async (req, res, next, dbClient) => {
   const resUpdate = await Storage.update(req.body, dbClient);
   res.status(200).json(resUpdate.item);
-};
-
-const getBlogFullPromises = (req, dbClient, blogs) => {
-  // restore the files info by id
-  const fullFiles = blogs
-    .map((item) => {
-      return item.files.reduce((acc, arr) => {
-        if (arr.fileId) {
-          return [...acc, arr.fileId];
-        } else {
-          return acc;
-        }
-      }, []);
-    })
-    .map((filesId) => {
-      return getListOfItems(
-        filesId,
-        'file-label',
-        req.body.requestContext.site_db_name,
-        dbClient
-      );
-    });
-  // restore the leads info by id
-  const fullLeads = blogs
-    .map((item) => {
-      return item.leads.reduce((acc, arr) => {
-        if (arr.leadId) {
-          return [...acc, arr.leadId];
-        } else {
-          return acc;
-        }
-      }, []);
-    })
-    .map((leadsId) => {
-      return getListOfItems(
-        leadsId,
-        'officers',
-        req.body.requestContext.site_db_name,
-        dbClient
-      );
-    });
-  return { fullFiles, fullLeads };
-};
-
-const getListOfItems = async (ids, collectionName, site_db_name, dbClient) => {
-  const items = ids.map((id) => {
-    return Storage.get(
-      {
-        itemId: id,
-        collectionName,
-        requestContext: { site_db_name },
-      },
-      dbClient
-    );
-  });
-  const results = await Promise.all(items);
-  return results.map((item) => item.item);
 };

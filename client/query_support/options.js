@@ -104,14 +104,15 @@ function eventTimeTrimFilter(input) {
   }
 
   const res = {};
-  res.query = { eventTime: { [eventTime.operator]: date } };
+  res.query = { eventStartTime: { [eventTime.operator]: date } };
   return res;
 }
 
 function eventTimeFilter(input) {
-  const query = {
-    eventTime: { [input.operator]: input.eventTime },
-  };
+  const query = [
+    { eventStartTime: { $gte: input.eventStartTime } },
+    { eventStartTime: { $lt: input.eventEndTime } },
+  ];
   return { query };
 }
 
@@ -122,23 +123,12 @@ function eventTimeRangeFilter(input) {
   const start = new Date(obj.range.start);
   const end = new Date(obj.range.end);
 
-  res[operator] = [
-    { date: start, operator: '$gte' },
-    { date: end, operator: '$lt' },
-  ].map((obj) => {
-    return eventTimeFilter({ ...obj, eventTime: obj.date }).query;
-  });
+  res[operator] = eventTimeFilter({
+    eventStartTime: start,
+    eventEndTime: end,
+  }).query;
   return { query: res };
 }
-
-// function defaultSort() {
-//    return {
-//       sort: {
-//          eventTime: -1,
-//          lastModifiedDate: -1,
-//       }
-//    };
-// }
 
 function fieldSort(input) {
   return {
@@ -199,8 +189,8 @@ const sort_options = [
     priority: PRIORITY.MEDIUM,
   },
   {
-    optionKey: 'sortByEventTime',
-    dbFieldName: 'eventTime',
+    optionKey: 'sortByEventStartTime',
+    dbFieldName: 'eventStartTime',
     optionValues: [
       { s: 'ascending', number: 1 },
       { s: 'descending', number: -1 },
@@ -243,7 +233,7 @@ const filter_options = [
       { optionKey: 'eventLocation' },
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByCreatedDate' },
-      { optionKey: 'sortByEventTime' },
+      { optionKey: 'sortByEventStartTime' },
       { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ],
@@ -257,7 +247,7 @@ const filter_options = [
     parser: eventLeadNamesFilter,
     mutualExclusive: [
       { optionKey: 'sortByTextMatchScore' },
-      { optionKey: 'sortByEventTime' },
+      { optionKey: 'sortByEventStartTime' },
       { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ], // exact match, no other collection sorting involved
@@ -268,7 +258,7 @@ const filter_options = [
     parser: eventFilesFilter,
     mutualExclusive: [
       { optionKey: 'sortByTextMatchScore' },
-      { optionKey: 'sortByEventTime' },
+      { optionKey: 'sortByEventStartTime' },
       { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ], // exact match, no other collection sorting involved
@@ -283,7 +273,7 @@ const filter_options = [
       { optionKey: 'eventTitle' },
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByCreatedDate' },
-      { optionKey: 'sortByEventTime' },
+      { optionKey: 'sortByEventStartTime' },
       { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ],
@@ -303,7 +293,7 @@ const filter_options = [
     priority: PRIORITY.MEDIUM,
   },
   {
-    optionKey: 'eventTime',
+    optionKey: 'eventStartTime',
     parser: eventTimeTrimFilter,
     mutualExclusive: [
       { optionKey: 'sortByLastModifiedDate' },
@@ -339,7 +329,7 @@ const filter_options = [
       { optionKey: 'ALL_OTHER_FILTER' },
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByCreatedDate' },
-      { optionKey: 'sortByEventTime' },
+      { optionKey: 'sortByEventStartTime' },
       { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ],
@@ -355,7 +345,7 @@ const filter_options = [
       { optionKey: 'ALL_OTHER_FILTER' },
       { optionKey: 'sortByLastModifiedDate' },
       { optionKey: 'sortByCreatedDate' },
-      { optionKey: 'sortByEventTime' },
+      { optionKey: 'sortByEventStartTime' },
       { optionKey: 'sortByFileLastModifiedDate' },
       { optionKey: 'sortByCaption' },
     ],

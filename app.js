@@ -36,19 +36,21 @@ let client;
     app.use(cookieParser());
     app.use(express.urlencoded({ extended: false }));
 
-    /* ignore direct access to the interface through GET */
-    /// //////////////////////////////////////////////////////
-    app.use('/static', express.static(path.join(__dirname, 'public')));
-    app.get('/*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'public/index.html'));
-    });
-    /// //////////////////////////////////////////////////////
-
     // user sign-up
     app.post(
       '/sign-up/newAccount',
       wrapError(userAccountRegister.registerUser, client)
     );
+    // public event collection
+    app.get(
+      '/data/truncated-event/find',
+      wrapError(blogs.findBlogEntry, client)
+    );
+    app.get(
+      '/data/full-event/find',
+      wrapError(blogs.findFullBlogEntry, client)
+    );
+    app.get('/data/blogs/get', wrapError(blogs.getBlogEntry, client));
 
     // user authentication
     app.post(
@@ -74,8 +76,7 @@ let client;
     app.post('/file/delete', wrapError(files.deleteOneFile, client));
 
     // new routes for BLOGS, specifically
-    app.post('/data/blogs/find', wrapError(blogs.findBlogEntry, client));
-    app.post('/data/blogs/get', wrapError(blogs.getBlogEntry, client));
+    // app.post('/data/blogs/find', wrapError(blogs.findBlogEntry, client));
     app.post('/data/blogs/update', wrapError(blogs.updateBlogEntry, client));
     app.post(
       '/data/pureBlogs/insert',
@@ -96,6 +97,14 @@ let client;
     app.post('/data/removeMany', wrapError(items.removeManyItems, client));
     app.post('/data/count', wrapError(items.countItems, client));
     app.post('/provision', wrapError(provision.provision, client));
+
+    /* ignore direct access to the interface through GET */
+    /// //////////////////////////////////////////////////////
+    app.use('/static', express.static(path.join(__dirname, 'public')));
+    app.get('/*', (req, res) => {
+      res.sendFile(path.join(__dirname, 'public/index.html'));
+    });
+    /// //////////////////////////////////////////////////////
 
     // handling errors
     app.use(errorMiddleware);

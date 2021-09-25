@@ -11,6 +11,10 @@ module.exports = {
     },
     MAIN: {
       OFFICER: 'officers',
+      FILE: 'file-label',
+      EVENT: 'test_event_blogs',
+      PURE_BLOG: 'text',
+      TRUNCATED_PURE_BLOG: 'truncated-pure-blog',
     },
   },
 };
