@@ -23,6 +23,11 @@
 * The web app is now deployed on a Nginx server with public URL http://aiaautd-mongodb-adapter.herokuapp.com/
 * The free server on which the API is deployed will sleep after 30min inactivity.
 
+### Debugging/Running Prerequisites
+* BE (runs on localhost at port 8080): to run/debug locally, you must
+   * Have the **.env** file in the repo root folder (read more in the onboarding doc)
+   * Comment out `app.use(cors(corsOptions));` at line 33 of /app.js to disable cross-origin check
+
 ### Debugging
 * Notice that the /constants/cors-config.js file contains a whitelist of trusted host URLs, from whom the requests are received. If a untrusted host sends a request to the API, a CORS error will be returned.
 * Run `npm run debug` in your debugger to debug locally. For example, in vscode, go to the debug tab and select `Run Scripts: debug` to kick off the debugger.
