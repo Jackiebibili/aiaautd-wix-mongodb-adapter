@@ -69,7 +69,7 @@ let client;
     // dummy auth end point -- do nothing
     app.post('/wall', (_, res) => res.status(200).send(''));
 
-    // upload images without authentication
+    // upload images
     app.use('/file', fileRouter(client));
 
     // routes for gridfs operations (e.g. delete)
